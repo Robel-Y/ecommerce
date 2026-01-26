@@ -21,10 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect_with_message('user/register.php', 'error', 'Invalid request method');
 }
 
-// Validate CSRF token
-if (!isset($_POST['csrf_token']) || !validate_csrf_token($_POST['csrf_token'])) {
-    redirect_with_message('user/register.php', 'error', 'Invalid security token');
-}
+
 
 // Get form data
 $name = sanitize_input($_POST['name'] ?? '', 'string');
@@ -87,7 +84,7 @@ if (!$password_strength['valid']) {
 }
 
 // Check if email already exists
-$existing_user = get_user_by_email($email, $db);
+$existing_user = get_user_by_email($email);
 if (!empty($existing_user)) {
     $_SESSION['validation_errors']['email'] = ['Email address already registered'];
     redirect('user/register.php');
@@ -107,7 +104,7 @@ $user_data = [
 ];
 
 // Create user
-$result = create_user($user_data, $db);
+$result = create_user($user_data);
 
 if (!$result['success']) {
     $_SESSION['validation_errors']['general'] = $result['errors'];
@@ -115,7 +112,7 @@ if (!$result['success']) {
 }
 
 // Get the newly created user
-$user = get_user_by_id($result['user_id'], $db);
+$user = get_user_by_id($result['user_id']);
 
 // Auto-login the user
 login_user([

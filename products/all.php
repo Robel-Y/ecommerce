@@ -3,454 +3,503 @@
    PRODUCT LISTING PAGE - Procedural
    Display all products with filtering and pagination
 ============================================ */
-
-// Start session
-if (session_status() === PHP_SESSION_NONE) {
-    require_once __DIR__ . '/../config/constants.php';
-    start_secure_session();
-}
-
-// Include required files
+require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../functions/security.php';
+require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/utilities.php';
+
+// Start secure session if not started
+if (session_status() === PHP_SESSION_NONE) {
+    if (function_exists('start_secure_session')) {
+        start_secure_session();
+    } else {
+        session_start();
+    }
+}
 
 // Set page title
 $page_title = "Products | " . SITE_NAME;
 
+// ---------------------------
 // Get filter parameters
-$category_id = isset($_GET['category']) ? (int)$_GET['category'] : 0;
-$search_query = isset($_GET['search']) ? sanitize_input($_GET['search'], 'string') : '';
-$min_price = isset($_GET['min_price']) ? (float)$_GET['min_price'] : 0;
-$max_price = isset($_GET['max_price']) ? (float)$_GET['max_price'] : 1000;
-$sort_by = isset($_GET['sort']) ? sanitize_input($_GET['sort'], 'string') : 'newest';
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+// ---------------------------
+$category = isset($_GET['category']) ? $_GET['category'] : '';
+$search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
+$min_price = isset($_GET['min_price']) ? (float) $_GET['min_price'] : 0;
+$max_price = isset($_GET['max_price']) ? (float) $_GET['max_price'] : 10000;
+$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'newest';
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $per_page = 12;
 
-// Validate page number
-if ($page < 1) {
+if ($page < 1)
     $page = 1;
-}
 
-// Calculate offset
-$offset = ($page - 1) * $per_page;
-
+// ---------------------------
 // Build WHERE clause
-$where_clause = "WHERE p.status = 'active'";
-$params = [];
-$param_types = '';
+// ---------------------------
+// Using '1=1' allows simpler appending of AND clauses
+$where_clauses = ["1=1"];
+// Initialize procedural connection
+$conn = db_connect();
 
-if ($category_id > 0) {
-    $where_clause .= " AND p.category_id = ?";
-    $params[] = $category_id;
-    $param_types .= 'i';
+$sql_conditions = [];
+$params = [];
+
+if (!empty($category)) {
+    $where_clauses[] = "category = :category";
+    $params[':category'] = $category;
 }
 
 if (!empty($search_query)) {
-    $where_clause .= " AND (p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)";
-    $search_param = "%$search_query%";
-    $params[] = $search_param;
-    $params[] = $search_param;
-    $params[] = $search_param;
-    $param_types .= 'sss';
+    $where_clauses[] = "(LOWER(name) LIKE :search)";
+    $params[':search'] = '%' . mb_strtolower($search_query) . '%';
 }
 
 if ($min_price > 0) {
-    $where_clause .= " AND p.price >= ?";
-    $params[] = $min_price;
-    $param_types .= 'd';
+    $where_clauses[] = "price >= :min_price";
+    $params[':min_price'] = $min_price;
 }
 
-if ($max_price > 0 && $max_price < 10000) {
-    $where_clause .= " AND p.price <= ?";
-    $params[] = $max_price;
-    $param_types .= 'd';
+if ($max_price < 10000) {
+    $where_clauses[] = "price <= :max_price";
+    $params[':max_price'] = $max_price;
 }
 
-// Build ORDER BY clause
-$order_by = "ORDER BY ";
+$where_sql = implode(" AND ", $where_clauses);
+
+// ---------------------------
+// Build ORDER BY
+// ---------------------------
 switch ($sort_by) {
     case 'price_low':
-        $order_by .= "p.price ASC";
+        $order_sql = "ORDER BY price ASC";
         break;
     case 'price_high':
-        $order_by .= "p.price DESC";
+        $order_sql = "ORDER BY price DESC";
         break;
     case 'name':
-        $order_by .= "p.name ASC";
-        break;
-    case 'popular':
-        $order_by .= "p.sales_count DESC";
+        $order_sql = "ORDER BY name ASC";
         break;
     case 'newest':
     default:
-        $order_by .= "p.created_at DESC";
+        $order_sql = "ORDER BY created_at DESC";
         break;
 }
 
-// Get total products count
-$count_query = "SELECT COUNT(*) as total FROM products p 
-                LEFT JOIN categories c ON p.category_id = c.id 
-                $where_clause";
-
-$stmt = $db->prepare($count_query);
-
-if (!empty($params)) {
-    $stmt->bind_param($param_types, ...$params);
+// If searching, prefer prefix matches first for more accurate live typing
+if (!empty($search_query)) {
+    $order_sql = "ORDER BY CASE WHEN LOWER(name) LIKE :search_prefix THEN 0 ELSE 1 END, name ASC";
+    $params[':search_prefix'] = mb_strtolower($search_query) . '%';
 }
 
-$stmt->execute();
-$count_result = $stmt->get_result();
-$total_products = $count_result->fetch_assoc()['total'];
-$stmt->close();
+// Count query does not use :search_prefix (ORDER BY param), so exclude it to avoid HY093.
+$count_params = $params;
+unset($count_params[':search_prefix']);
 
+// ---------------------------
+// Get total product count
+// ---------------------------
+$count_sql = "SELECT COUNT(*) AS total FROM products WHERE $where_sql";
+$total_products = 0;
+if (db_query($count_sql)) {
+    foreach ($count_params as $key => $value) {
+        db_bind($key, $value);
+    }
+    $total_result = db_single();
+    $total_products = $total_result ? (int) ($total_result['total'] ?? 0) : 0;
+}
+
+// ---------------------------
 // Get products with pagination
-$query = "SELECT p.*, c.name as category_name 
-          FROM products p 
-          LEFT JOIN categories c ON p.category_id = c.id 
-          $where_clause 
-          $order_by 
-          LIMIT ? OFFSET ?";
+// ---------------------------
+$offset = ($page - 1) * $per_page;
+$products_sql = "SELECT * FROM products WHERE $where_sql $order_sql LIMIT :limit OFFSET :offset";
 
-$params[] = $per_page;
-$params[] = $offset;
-$param_types .= 'ii';
-
-$stmt = $db->prepare($query);
-$stmt->bind_param($param_types, ...$params);
-$stmt->execute();
-$products_result = $stmt->get_result();
 $products = [];
-
-while ($row = $products_result->fetch_assoc()) {
-    $products[] = $row;
+if (db_query($products_sql)) {
+    foreach ($params as $key => $value) {
+        db_bind($key, $value);
+    }
+    db_bind(':limit', $per_page, PDO::PARAM_INT);
+    db_bind(':offset', $offset, PDO::PARAM_INT);
+    $products = db_result_set();
 }
 
-$stmt->close();
-
-// Get categories for filter
-$categories_query = "SELECT id, name, COUNT(p.id) as product_count 
-                     FROM categories c 
-                     LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active'
-                     WHERE c.status = 'active'
-                     GROUP BY c.id, c.name 
-                     ORDER BY c.name";
-$categories_result = $db->query($categories_query);
-$categories = [];
-
-while ($row = $categories_result->fetch_assoc()) {
-    $categories[] = $row;
-}
-
+// ---------------------------
 // Generate pagination
-$pagination = generate_pagination($total_products, $page, $per_page, 'products/all.php');
+// ---------------------------
+$pagination = generate_pagination($total_products, $page, $per_page, SITE_URL . 'products/all.php');
+
+// Build query strings for filter links (preserve current filters except category/page)
+$current_params = $_GET;
+unset($current_params['page']);
+
+function build_products_all_url(array $params): string
+{
+    $qs = http_build_query(array_filter($params, static function ($value) {
+        return $value !== '' && $value !== null;
+    }));
+    return $qs ? ('?' . $qs) : '';
+}
+
+// ---------------------------
+// AJAX: return partial results for live search
+// ---------------------------
+$is_ajax = isset($_GET['ajax']) && $_GET['ajax'] === '1'
+    && (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest');
+
+if ($is_ajax) {
+    header('Content-Type: application/json');
+
+    // Ensure ajax param does not leak into generated links
+    $ajax_params = $_GET;
+    unset($ajax_params['ajax']);
+    unset($ajax_params['page']);
+
+    // Build header title (same logic as page)
+    if (!empty($category)) {
+        $header_title = ucfirst((string) $category);
+    } elseif (!empty($search_query)) {
+        $header_title = 'Search: "' . $search_query . '"';
+    } else {
+        $header_title = 'All Products';
+    }
+
+    ob_start();
+    if (empty($products)) {
+        ?>
+        <div class="no-products text-center py-5">
+            <div class="mb-md">
+                <i class="fas fa-search fa-3x text-muted"></i>
+            </div>
+            <h3>No products found</h3>
+            <p class="text-muted">Try adjusting your filters or search query.</p>
+            <a href="<?php echo SITE_URL; ?>products/all.php" class="btn btn-secondary mt-md">Clear Filters</a>
+        </div>
+        <?php
+    } else {
+        ?>
+        <div class="products-grid-3">
+            <?php foreach ($products as $product): ?>
+                <div class="product-card h-100">
+                    <div class="product-image">
+                        <?php
+                        $image_url = !empty($product['image']) ? $product['image'] : 'assets/images/placeholder.jpg';
+                        if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
+                            $image_url = SITE_URL . $image_url;
+                        }
+                        ?>
+                        <img src="<?php echo htmlspecialchars($image_url); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>">
+                        <?php if (($product['stock'] ?? 0) < 5): ?>
+                            <span class="product-badge" style="background: var(--danger-color);">Low Stock</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-title">
+                            <a href="<?php echo SITE_URL; ?>products/details.php?id=<?php echo (int) $product['id']; ?>">
+                                <?php echo htmlspecialchars($product['name']); ?>
+                            </a>
+                        </h3>
+                        <div class="product-rating">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                            <span class="rating-count">(4.5)</span>
+                        </div>
+                        <p class="product-price">
+                            <span class="current-price">$<?php echo number_format((float) $product['price'], 2); ?></span>
+                        </p>
+                        <button class="btn btn-add-cart" data-product-id="<?php echo (int) $product['id']; ?>">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <?php if ($pagination['total_pages'] > 1): ?>
+            <div class="pagination-container mt-xl text-center">
+                <nav class="pagination">
+                    <?php if ($pagination['has_previous']): ?>
+                        <a href="<?php echo build_products_all_url(array_merge($ajax_params, ['page' => $pagination['previous_page']])); ?>"
+                            class="btn btn-secondary btn-sm">&laquo; Prev</a>
+                    <?php endif; ?>
+
+                    <span class="mx-2">Page <?php echo (int) $page; ?> of <?php echo (int) $pagination['total_pages']; ?></span>
+
+                    <?php if ($pagination['has_next']): ?>
+                        <a href="<?php echo build_products_all_url(array_merge($ajax_params, ['page' => $pagination['next_page']])); ?>"
+                            class="btn btn-secondary btn-sm">Next &raquo;</a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+        <?php endif; ?>
+        <?php
+    }
+    $results_html = ob_get_clean();
+
+    echo json_encode([
+        'success' => true,
+        'title' => $header_title,
+        'count' => (int) $total_products,
+        'resultsHtml' => $results_html,
+    ]);
+    exit;
+}
+
 
 // Include header
 include_once __DIR__ . '/../includes/header.php';
 ?>
-
+<!-- Page specific JS can still be here if not in header -->
+<script src="<?php echo SITE_URL; ?>assets/js/products-script.js"></script>
 <!-- Products Page Content -->
-<div class="product-listing">
+<div class="product-listing section-padding">
     <div class="container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>Our Products</h1>
-            <p>Discover our amazing collection of products</p>
+        <div class="listing-header mb-xl">
+            <h1>
+                <?php
+                if (!empty($category)) {
+                    echo ucfirst(htmlspecialchars($category));
+                } elseif (!empty($search_query)) {
+                    echo 'Search: "' . htmlspecialchars($search_query) . '"';
+                } else {
+                    echo 'All Products';
+                }
+                ?>
+            </h1>
+            <p class="text-muted"><?php echo $total_products; ?> products found</p>
         </div>
 
-        <div class="product-layout">
+        <div class="row">
             <!-- Sidebar Filters -->
-            <div class="product-sidebar">
-                <!-- Search Form -->
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title">Search</h3>
-                    <form class="filter-form" method="GET" action="products/all.php">
-                        <div class="form-group">
-                            <input type="text" name="search" class="form-control" 
-                                   placeholder="Search products..." 
-                                   value="<?php echo htmlspecialchars($search_query); ?>">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm">Search</button>
-                    </form>
-                </div>
-
-                <!-- Categories Filter -->
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title">Categories</h3>
-                    <div class="filter-options">
-                        <div class="filter-option">
-                            <a href="products/all.php" class="<?php echo $category_id == 0 ? 'active' : ''; ?>">
+            <aside class="col-3 filters-sidebar">
+                <div class="card mb-lg">
+                    <div class="card-header">
+                        <h3 class="card-title">Categories</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="filter-list">
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => ''])); ?>"
+                                class="<?php echo empty($category) ? 'active' : ''; ?>">
                                 All Categories
-                                <span class="filter-count">(<?php echo $total_products; ?>)</span>
                             </a>
-                        </div>
-                        <?php foreach ($categories as $category): ?>
-                        <div class="filter-option">
-                            <a href="products/all.php?category=<?php echo $category['id']; ?>" 
-                               class="<?php echo $category_id == $category['id'] ? 'active' : ''; ?>">
-                                <?php echo htmlspecialchars($category['name']); ?>
-                                <span class="filter-count">(<?php echo $category['product_count']; ?>)</span>
-                            </a>
-                        </div>
-                        <?php endforeach; ?>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'electronics'])); ?>"
+                                class="<?php echo $category === 'electronics' ? 'active' : ''; ?>">Electronics</a>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'fashion'])); ?>"
+                                class="<?php echo $category === 'fashion' ? 'active' : ''; ?>">Fashion</a>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'home'])); ?>"
+                                class="<?php echo $category === 'home' ? 'active' : ''; ?>">Home & Garden</a>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'sports'])); ?>"
+                                class="<?php echo $category === 'sports' ? 'active' : ''; ?>">Sports</a>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'beauty'])); ?>"
+                                class="<?php echo $category === 'beauty' ? 'active' : ''; ?>">Beauty</a>
+                            </li>
+                            <li>
+                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'books'])); ?>"
+                                class="<?php echo $category === 'books' ? 'active' : ''; ?>">Books</a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
-                <!-- Price Filter -->
-                <div class="sidebar-section">
-                    <h3 class="sidebar-title">Price Range</h3>
-                    <form class="filter-form" method="GET" action="products/all.php">
-                        <input type="hidden" name="category" value="<?php echo $category_id; ?>">
-                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search_query); ?>">
-                        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort_by); ?>">
-                        
-                        <div class="price-range-slider">
-                            <input type="range" class="form-range" min="0" max="1000" step="10" 
-                                   value="<?php echo $min_price; ?>" id="minPrice" name="min_price">
-                            <input type="range" class="form-range" min="0" max="1000" step="10" 
-                                   value="<?php echo $max_price; ?>" id="maxPrice" name="max_price">
-                        </div>
-                        
-                        <div class="price-range-values">
-                            <span>$<span id="minPriceValue"><?php echo $min_price; ?></span></span>
-                            <span> - </span>
-                            <span>$<span id="maxPriceValue"><?php echo $max_price; ?></span></span>
-                        </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-sm mt-3">Apply Filter</button>
-                    </form>
-                </div>
-
-                <!-- Clear Filters -->
-                <?php if ($category_id > 0 || !empty($search_query) || $min_price > 0 || $max_price < 1000): ?>
-                <div class="sidebar-section">
-                    <a href="products/all.php" class="btn btn-outline btn-sm">Clear All Filters</a>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- Main Content -->
-            <div class="product-grid-main">
-                <!-- Sorting and View Options -->
-                <div class="product-sorting">
-                    <div class="sort-left">
-                        <span class="sort-label">Sort by:</span>
-                        <select class="sort-select" onchange="window.location.href=this.value">
-                            <option value="products/all.php?sort=newest<?php echo build_query_string(['sort' => '']); ?>" 
-                                    <?php echo $sort_by == 'newest' ? 'selected' : ''; ?>>Newest</option>
-                            <option value="products/all.php?sort=price_low<?php echo build_query_string(['sort' => '']); ?>" 
-                                    <?php echo $sort_by == 'price_low' ? 'selected' : ''; ?>>Price: Low to High</option>
-                            <option value="products/all.php?sort=price_high<?php echo build_query_string(['sort' => '']); ?>" 
-                                    <?php echo $sort_by == 'price_high' ? 'selected' : ''; ?>>Price: High to Low</option>
-                            <option value="products/all.php?sort=name<?php echo build_query_string(['sort' => '']); ?>" 
-                                    <?php echo $sort_by == 'name' ? 'selected' : ''; ?>>Name</option>
-                            <option value="products/all.php?sort=popular<?php echo build_query_string(['sort' => '']); ?>" 
-                                    <?php echo $sort_by == 'popular' ? 'selected' : ''; ?>>Most Popular</option>
-                        </select>
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Price Range</h3>
                     </div>
-                    
-                    <div class="sort-right">
-                        <span class="results-count">
-                            Showing <?php echo ($offset + 1); ?>-<?php echo min($offset + $per_page, $total_products); ?> 
-                            of <?php echo $total_products; ?> products
-                        </span>
-                    </div>
-                </div>
+                    <div class="card-body">
+                        <form action="" method="GET">
+                            <?php if (!empty($category))
+                                echo '<input type="hidden" name="category" value="' . htmlspecialchars($category) . '">'; ?>
+                            <?php if (!empty($search_query))
+                                echo '<input type="hidden" name="search" value="' . htmlspecialchars($search_query) . '">'; ?>
 
-                <!-- Products Grid -->
-                <?php if (empty($products)): ?>
-                <div class="no-products">
-                    <div class="no-products-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h3>No products found</h3>
-                    <p>Try adjusting your search or filter to find what you're looking for.</p>
-                    <a href="products/all.php" class="btn btn-primary">Clear Filters</a>
-                </div>
-                <?php else: ?>
-                <div class="products-grid">
-                    <?php foreach ($products as $product): ?>
-                    <div class="product-card-wrapper">
-                        <div class="product-card">
-                            <div class="product-image">
-                                <a href="products/details.php?id=<?php echo $product['id']; ?>">
-                                    <img src="<?php echo htmlspecialchars($product['image_url']); ?>" 
-                                         alt="<?php echo htmlspecialchars($product['name']); ?>"
-                                         onerror="this.src='assets/images/products/default.jpg'">
-                                </a>
-                                <?php if ($product['stock'] == 0): ?>
-                                <span class="product-badge out-of-stock">Out of Stock</span>
-                                <?php elseif ($product['discount'] > 0): ?>
-                                <span class="product-badge sale"><?php echo $product['discount']; ?>% OFF</span>
-                                <?php elseif (strtotime($product['created_at']) > strtotime('-7 days')): ?>
-                                <span class="product-badge new">New</span>
-                                <?php endif; ?>
+                            <div class="form-group mb-sm">
+                                <label for="min_price">Min Price</label>
+                                <input type="number" name="min_price" id="min_price" class="form-control"
+                                    value="<?php echo $min_price; ?>" min="0">
                             </div>
-                            
-                            <div class="product-info">
-                                <div class="product-category">
-                                    <?php echo htmlspecialchars($product['category_name']); ?>
-                                </div>
-                                
-                                <h3 class="product-title">
-                                    <a href="products/details.php?id=<?php echo $product['id']; ?>">
-                                        <?php echo htmlspecialchars($product['name']); ?>
-                                    </a>
-                                </h3>
-                                
-                                <div class="product-description">
-                                    <?php echo truncate_text($product['description'], 100); ?>
-                                </div>
-                                
-                                <div class="product-price">
-                                    <?php if ($product['discount'] > 0): 
-                                        $discounted_price = $product['price'] * (1 - $product['discount'] / 100);
+                            <div class="form-group mb-md">
+                                <label for="max_price">Max Price</label>
+                                <input type="number" name="max_price" id="max_price" class="form-control"
+                                    value="<?php echo $max_price; ?>">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                        </form>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Product Grid -->
+            <div class="col-9 product-content">
+                <?php if (empty($products)): ?>
+                    <div class="no-products text-center py-5">
+                        <div class="mb-md">
+                            <i class="fas fa-search fa-3x text-muted"></i>
+                        </div>
+                        <h3>No products found</h3>
+                        <p class="text-muted">Try adjusting your filters or search query.</p>
+                        <a href="<?php echo SITE_URL; ?>products/all.php" class="btn btn-secondary mt-md">Clear Filters</a>
+                    </div>
+                <?php else: ?>
+                    <div class="products-grid-3">
+                        <?php foreach ($products as $product): ?>
+                            <div class="product-card h-100">
+                                <div class="product-image">
+                                    <?php
+                                    $image_url = !empty($product['image']) ? $product['image'] : 'assets/images/placeholder.jpg';
+                                    if (filter_var($image_url, FILTER_VALIDATE_URL)) {
+                                        // It's a URL
+                                    } else {
+                                        // It's a local path
+                                        $image_url = SITE_URL . $image_url;
+                                    }
                                     ?>
-                                    <span class="current-price">$<?php echo number_format($discounted_price, 2); ?></span>
-                                    <span class="original-price">$<?php echo number_format($product['price'], 2); ?></span>
-                                    <?php else: ?>
-                                    <span class="current-price">$<?php echo number_format($product['price'], 2); ?></span>
+                                    <img src="<?php echo htmlspecialchars($image_url); ?>"
+                                        alt="<?php echo htmlspecialchars($product['name']); ?>">
+                                    <?php if ($product['stock'] < 5): ?>
+                                        <span class="product-badge" style="background: var(--danger-color);">Low Stock</span>
                                     <?php endif; ?>
                                 </div>
-                                
-                                <div class="product-rating">
-                                    <div class="stars">
-                                        <?php
-                                        $rating = $product['rating'] ?? 0;
-                                        $full_stars = floor($rating);
-                                        $half_star = $rating - $full_stars >= 0.5;
-                                        
-                                        for ($i = 1; $i <= 5; $i++):
-                                            if ($i <= $full_stars):
-                                        ?>
-                                        <i class="fas fa-star"></i>
-                                        <?php elseif ($i == $full_stars + 1 && $half_star): ?>
-                                        <i class="fas fa-star-half-alt"></i>
-                                        <?php else: ?>
-                                        <i class="far fa-star"></i>
-                                        <?php endif; endfor; ?>
+                                <div class="product-info">
+                                    <h3 class="product-title">
+                                        <a href="<?php echo SITE_URL; ?>products/details.php?id=<?php echo $product['id']; ?>">
+                                            <?php echo htmlspecialchars($product['name']); ?>
+                                        </a>
+                                    </h3>
+                                    <div class="product-rating">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star-half-alt text-warning"></i>
+                                        <span class="rating-count">(4.5)</span>
                                     </div>
-                                    <span class="rating-count">(<?php echo $product['review_count'] ?? 0; ?>)</span>
-                                </div>
-                                
-                                <div class="product-actions">
-                                    <?php if ($product['stock'] > 0): ?>
-                                    <button class="btn btn-add-cart" 
-                                            data-product-id="<?php echo $product['id']; ?>"
-                                            data-product-name="<?php echo htmlspecialchars($product['name']); ?>"
-                                            data-product-price="<?php echo $product['price']; ?>"
-                                            data-product-image="<?php echo htmlspecialchars($product['image_url']); ?>">
+                                    <p class="product-price">
+                                        <span class="current-price">$<?php echo number_format($product['price'], 2); ?></span>
+                                    </p>
+                                    <button class="btn btn-add-cart" data-product-id="<?php echo $product['id']; ?>">
                                         <i class="fas fa-cart-plus"></i> Add to Cart
                                     </button>
-                                    <?php else: ?>
-                                    <button class="btn btn-outline" disabled>
-                                        <i class="fas fa-bell"></i> Notify Me
-                                    </button>
-                                    <?php endif; ?>
-                                    <a href="products/details.php?id=<?php echo $product['id']; ?>" 
-                                       class="btn btn-view">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
                                 </div>
                             </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-                    <?php endforeach; ?>
-                </div>
-                <?php endif; ?>
 
-                <!-- Pagination -->
-                <?php if ($pagination['total_pages'] > 1): ?>
-                <div class="pagination-container">
-                    <?php echo get_pagination_html($pagination, 'products/all.php'); ?>
-                </div>
+                    <!-- Pagination -->
+                    <!-- Simplified pagination display -->
+                    <?php if ($pagination['total_pages'] > 1): ?>
+                        <div class="pagination-container mt-xl text-center">
+                            <nav class="pagination">
+                                <?php if ($pagination['has_previous']): ?>
+                                    <a href="<?php echo build_products_all_url(array_merge($current_params, ['page' => $pagination['previous_page']])); ?>"
+                                        class="btn btn-secondary btn-sm">&laquo; Prev</a>
+                                <?php endif; ?>
+
+                                <span class="mx-2">Page <?php echo $page; ?> of <?php echo $pagination['total_pages']; ?></span>
+
+                                <?php if ($pagination['has_next']): ?>
+                                    <a href="<?php echo build_products_all_url(array_merge($current_params, ['page' => $pagination['next_page']])); ?>"
+                                        class="btn btn-secondary btn-sm">Next &raquo;</a>
+                                <?php endif; ?>
+                            </nav>
+                        </div>
+                    <?php endif; ?>
+
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-// Price range slider functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const minPriceSlider = document.getElementById('minPrice');
-    const maxPriceSlider = document.getElementById('maxPrice');
-    const minPriceValue = document.getElementById('minPriceValue');
-    const maxPriceValue = document.getElementById('maxPriceValue');
-    
-    if (minPriceSlider && maxPriceSlider) {
-        function updatePriceValues() {
-            minPriceValue.textContent = minPriceSlider.value;
-            maxPriceValue.textContent = maxPriceSlider.value;
-            
-            // Ensure min doesn't exceed max
-            if (parseInt(minPriceSlider.value) > parseInt(maxPriceSlider.value)) {
-                minPriceSlider.value = maxPriceSlider.value;
-            }
-        }
-        
-        minPriceSlider.addEventListener('input', updatePriceValues);
-        maxPriceSlider.addEventListener('input', updatePriceValues);
-        updatePriceValues();
+<style>
+    .products-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-lg);
     }
-    
-    // Add to cart functionality
-    document.querySelectorAll('.btn-add-cart').forEach(button => {
-        button.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const productName = this.getAttribute('data-product-name');
-            
-            // AJAX call to add to cart
-            fetch('process/cart_process.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: 'action=add&product_id=' + productId + '&quantity=1'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update cart count
-                    const cartCountElements = document.querySelectorAll('.cart-count');
-                    cartCountElements.forEach(el => {
-                        el.textContent = data.cart_count;
-                        el.style.display = 'inline-flex';
-                    });
-                    
-                    // Show success message
-                    showNotification(productName + ' added to cart!', 'success');
-                } else {
-                    showNotification(data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Failed to add to cart', 'error');
-            });
-        });
-    });
-    
-    // Helper function for query string
-    window.build_query_string = function(exclude) {
-        const params = new URLSearchParams(window.location.search);
-        
-        // Remove excluded parameters
-        if (exclude) {
-            Object.keys(exclude).forEach(key => {
-                if (exclude[key] === '') {
-                    params.delete(key);
-                }
-            });
+
+    .filters-sidebar .filter-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .filters-sidebar .filter-list li {
+        margin-bottom: var(--space-xs);
+    }
+
+    .filters-sidebar .filter-list a {
+        display: block;
+        padding: 8px 12px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        transition: all var(--transition-fast);
+    }
+
+    .filters-sidebar .filter-list a:hover,
+    .filters-sidebar .filter-list a.active {
+        background-color: var(--light-100);
+        color: var(--primary-color);
+        font-weight: 500;
+    }
+
+    .product-title a {
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+
+    .product-title a:hover {
+        color: var(--primary-color);
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -15px;
+        margin-left: -15px;
+    }
+
+    .col-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+        padding: 0 15px;
+    }
+
+    .col-9 {
+        flex: 0 0 75%;
+        max-width: 75%;
+        padding: 0 15px;
+    }
+
+    @media (max-width: 991px) {
+
+        .col-3,
+        .col-9 {
+            flex: 0 0 100%;
+            max-width: 100%;
         }
-        
-        const queryString = params.toString();
-        return queryString ? '&' + queryString : '';
-    };
-});
-</script>
+
+        .filters-sidebar {
+            margin-bottom: var(--space-xl);
+        }
+    }
+</style>
 
 <?php
-// Include footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>
