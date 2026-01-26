@@ -4,9 +4,9 @@
 
 /* Main Footer */
 .main-footer {
-    background: linear-gradient(135deg, #1a202c 0%, var(--primary-dark) 100%);
+    background: var(--text-color);
     color: var(--white);
-    padding: 60px 0 0 0;
+    padding: 56px 0 0 0;
     margin-top: 80px;
     position: relative;
 }
@@ -17,28 +17,26 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-color), #818cf8);
+    height: 3px;
+    background: var(--primary-color);
 }
 
-.container {
+.main-footer .container {
     max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 20px;
 }
 
 /* Footer Top */
 .footer-top {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    padding-bottom: 60px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 32px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 /* Footer Column */
 .footer-col {
-    animation: fadeInUp 0.5s ease;
+    animation: none;
 }
 
 .footer-logo {
@@ -51,14 +49,22 @@
 .footer-logo .logo-icon {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--primary-color), #818cf8);
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9999px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--white);
     font-size: 1.5rem;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    overflow: hidden;
+}
+
+.footer-logo .logo-icon img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    display: block;
 }
 
 .footer-logo .logo-text {
@@ -77,7 +83,7 @@
 .footer-logo .logo-sub {
     font-family: 'Inter', sans-serif;
     font-size: 1rem;
-    color: #818cf8;
+    color: var(--primary-light);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -86,7 +92,7 @@
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.78);
     margin-bottom: 25px;
 }
 
@@ -103,35 +109,19 @@
     justify-content: center;
     width: 42px;
     height: 42px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 50%;
     color: var(--white);
     font-size: 1.1rem;
     text-decoration: none;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.social-link::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
-}
-
-.social-link:hover::before {
-    left: 100%;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .social-link:hover {
-    background: var(--primary-color);
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-2px);
 }
 
 /* Footer Titles */
@@ -150,9 +140,9 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 40px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary-color), #818cf8);
+    width: 34px;
+    height: 2px;
+    background: var(--primary-color);
     border-radius: 2px;
 }
 
@@ -204,7 +194,7 @@
 
 .footer-links a:hover i {
     transform: translateX(5px);
-    color: #818cf8;
+    color: var(--primary-light);
 }
 
 .footer-links a:hover::before {
@@ -223,7 +213,7 @@
     align-items: flex-start;
     gap: 15px;
     margin-bottom: 20px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.78);
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
     line-height: 1.5;
@@ -248,7 +238,7 @@
 .newsletter p {
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.72);
     margin-bottom: 20px;
 }
 
@@ -264,15 +254,16 @@
     border-radius: var(--radius-lg);
     font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     color: var(--white);
-    transition: all 0.3s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .footer-newsletter input:focus {
     outline: none;
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+    background: rgba(255, 255, 255, 0.10);
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .footer-newsletter input::placeholder {
@@ -281,12 +272,12 @@
 
 .footer-newsletter button {
     padding: 14px 20px;
-    background: linear-gradient(135deg, var(--primary-color), #818cf8);
+    background: var(--primary-color);
     color: var(--white);
     border: none;
     border-radius: var(--radius-lg);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, background 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -294,8 +285,13 @@
 }
 
 .footer-newsletter button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.footer-newsletter button:focus-visible {
+    outline: 3px solid rgba(255, 255, 255, 0.25);
+    outline-offset: 2px;
 }
 
 /* Footer Bottom */
@@ -319,7 +315,7 @@
 .payment-methods span {
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .payment-icons {
@@ -329,14 +325,14 @@
 
 .payment-icons i {
     font-size: 1.8rem;
-    color: rgba(255, 255, 255, 0.7);
-    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.72);
+    transition: transform 0.2s ease, color 0.2s ease;
     cursor: pointer;
 }
 
 .payment-icons i:hover {
     color: var(--white);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 /* Copyright */
@@ -348,26 +344,14 @@
 .copyright p {
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.72);
     margin: 5px 0;
 }
 
 .copyright i {
-    color: #f56565;
+    color: var(--danger-color);
     margin: 0 5px;
-    animation: heartbeat 1.5s infinite;
-}
-
-@keyframes heartbeat {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.1);
-    }
+    animation: none;
 }
 
 /* Footer Apps */
@@ -381,18 +365,19 @@
     align-items: center;
     gap: 12px;
     padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: var(--radius-lg);
     color: var(--white);
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
     min-width: 180px;
 }
 
 .app-link:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-1px);
 }
 
 .app-link i {
@@ -419,7 +404,7 @@
     right: 30px;
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--primary-color), #818cf8);
+    background: var(--primary-color);
     color: var(--white);
     border: none;
     border-radius: 50%;
@@ -427,13 +412,13 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, opacity 0.2s ease, background 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
     z-index: 999;
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+    box-shadow: var(--shadow-md);
 }
 
 .back-to-top.visible {
@@ -443,8 +428,9 @@
 }
 
 .back-to-top:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+    background: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Tooltip */
@@ -473,15 +459,4 @@
     }
 }
 
-/* Animation */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+/* Animation removed for cleaner footer */

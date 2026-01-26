@@ -4,13 +4,13 @@
  * SITE CONFIGURATION
  */
 if (!defined('SITE_NAME'))
-    define('SITE_NAME', 'Modern Shop');
+    define('SITE_NAME', 'Merkato Go');
 if (!defined('SITE_URL'))
     define('SITE_URL', 'http://localhost/ecommerce/');
 if (!defined('SITE_EMAIL'))
-    define('SITE_EMAIL', 'support@modernshop.com');
+    define('SITE_EMAIL', 'support@merkato.com');
 if (!defined('ADMIN_EMAIL'))
-    define('ADMIN_EMAIL', 'admin@modernshop.com');
+    define('ADMIN_EMAIL', 'admin@merkato.com');
 
 // Common helpers (used by many endpoints immediately after requiring constants)
 require_once __DIR__ . '/../functions/security.php';
@@ -76,23 +76,19 @@ header("Permissions-Policy: geolocation=(), microphone=(), camera=()");
 if (!function_exists('startSecureSession')) {
     function startSecureSession()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            @ini_set('session.cookie_httponly', 1);
-            @ini_set('session.cookie_secure', 0);
-            @ini_set('session.use_strict_mode', 1);
-            @ini_set('session.cookie_samesite', 'Strict');
+        // Delegate to the unified session starter
+        if (function_exists('start_secure_session')) {
+            start_secure_session();
+            return;
+        }
 
+        // Fallback (should rarely be used)
+        if (session_status() === PHP_SESSION_NONE) {
             session_name('SECURE_SESSION');
             session_start();
-
             if (!isset($_SESSION['created'])) {
                 $_SESSION['created'] = time();
             }
-        }
-
-        if (isset($_SESSION['created']) && (time() - $_SESSION['created'] > SESSION_TIMEOUT)) {
-            session_regenerate_id(true);
-            $_SESSION['created'] = time();
         }
     }
 }

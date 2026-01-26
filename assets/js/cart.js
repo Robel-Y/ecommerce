@@ -76,6 +76,20 @@ function setupCartEventListeners() {
             }
         }
     });
+
+    // Manual quantity input (type number then blur/change)
+    document.addEventListener('change', function(e) {
+        const input = e.target.closest('.quantity-input');
+        if (!input) return;
+        const productId = input.getAttribute('data-product-id');
+        const qty = parseInt(input.value, 10);
+        if (!productId) return;
+        if (!Number.isFinite(qty) || qty <= 0) {
+            removeFromCart(productId);
+            return;
+        }
+        updateQuantity(productId, qty);
+    });
 }
 
 function buyNow(productId, quantity = 1) {
@@ -161,7 +175,13 @@ function removeFromCart(productId) {
             if (window.location.pathname.includes('cart.php')) {
                 location.reload();
             }
+        } else {
+            showNotification(data.message || 'Failed to remove item.', 'error');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
     });
 }
 
@@ -212,7 +232,13 @@ function clearCart() {
             if (window.location.pathname.includes('cart.php')) {
                 location.reload();
             }
+        } else {
+            showNotification(data.message || 'Failed to clear cart.', 'error');
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
     });
 }
 
@@ -227,6 +253,9 @@ function refreshCartCount() {
         if (data.success && data.cart) {
             updateHeaderCart(data.cart.count);
         }
+    })
+    .catch(() => {
+        // ignore (header cart count will be server-rendered)
     });
 }
 

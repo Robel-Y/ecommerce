@@ -82,6 +82,8 @@ $notification_count = $pending_orders_count + $low_stock_count;
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/layout.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/modern.css">
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>admin/css/admin.css">
+    <link rel="shortcut icon" href="<?php echo SITE_URL; ?>assets/images/icons/favicon.ico" type="image/x-icon">
+    
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -100,15 +102,15 @@ $notification_count = $pending_orders_count + $low_stock_count;
             </button>
             
             <div class="admin-logo">
-                <i class="fas fa-shield-alt"></i>
-                <span>Admin Panel</span>
+                <img src="<?php echo SITE_URL; ?>assets/images/icons/favicon.ico" alt="Merkato Go" class="admin-logo-img">
+                <span>Merkato Go</span>
             </div>
         </div>
         
         <div class="admin-header-right">
             <!-- Theme Toggle -->
             <div class="header-item">
-                <button type="button" class="theme-toggle" aria-label="Theme: System" title="Theme: System">
+                <button type="button" class="theme-toggle" aria-label="Theme: System">
                     <i class="fas fa-circle-half-stroke"></i>
                 </button>
             </div>

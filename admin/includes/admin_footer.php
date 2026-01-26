@@ -73,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const button = document.querySelector('.theme-toggle');
         if (!button) return;
 
+        // Avoid native browser tooltip from `title`.
+        button.removeAttribute('title');
+
         const modes = ['system', 'light', 'dark'];
 
         function readMode() {
@@ -98,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const label = 'Theme: ' + (mode.charAt(0).toUpperCase() + mode.slice(1));
             button.setAttribute('aria-label', label);
-            button.setAttribute('title', label);
+            button.removeAttribute('title');
 
             const icon = button.querySelector('i');
             if (icon) {

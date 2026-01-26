@@ -110,16 +110,24 @@
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--primary-color), #818cf8);
-  border-radius: 10px;
+  width: 60px;
+  height: 60px;
+  /* background: linear-gradient(135deg, var(--primary-color), #818cf8); */
+  border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--white);
   font-size: 1.3rem;
   box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+  overflow: hidden;
+}
+
+.logo-icon img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-text {
