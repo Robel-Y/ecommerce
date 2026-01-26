@@ -7,6 +7,7 @@
 // Require necessary files
 require_once __DIR__ . '/../functions/security.php';
 require_once __DIR__ . '/../functions/validation.php';
+require_once __DIR__ . '/../functions/cart.php';
 require_once __DIR__ . '/../config/database.php'; // procedural DB functions
 
 // Initialize PDO connection
@@ -153,6 +154,11 @@ function login_user($user, $remember = false)
             'hashed_token' => $hashed_token,
             'expiry' => $expiry
         ];
+    }
+
+    // Persist/merge cart for logged-in user (keeps cart after logout/login)
+    if (!empty($user['id'])) {
+        cart_merge_session_into_db_on_login((int) $user['id']);
     }
 
     return true;

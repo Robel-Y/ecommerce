@@ -14,8 +14,9 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
 require_once __DIR__ . '/../functions/security.php';
-require_once __DIR__ . '/../functions/security.php';
+require_once __DIR__ . '/../functions/request.php';
 require_once __DIR__ . '/../functions/utilities.php';
+require_once __DIR__ . '/../functions/cart.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
 // Check if user is logged in
@@ -41,14 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function process_order()
 {
     // Get form data
-    $shipping_address = sanitize_input($_POST['shipping_address'] ?? '', 'string');
-    $shipping_city = sanitize_input($_POST['shipping_city'] ?? '', 'string');
-    $shipping_state = sanitize_input($_POST['shipping_state'] ?? '', 'string');
-    $shipping_zip = sanitize_input($_POST['shipping_zip'] ?? '', 'string');
-    $shipping_country = sanitize_input($_POST['shipping_country'] ?? '', 'string');
-    $shipping_method = sanitize_input($_POST['shipping_method'] ?? 'standard', 'string');
+    $shipping_address = request_post_string('shipping_address', 'string', '');
+    $shipping_city = request_post_string('shipping_city', 'string', '');
+    $shipping_state = request_post_string('shipping_state', 'string', '');
+    $shipping_zip = request_post_string('shipping_zip', 'string', '');
+    $shipping_country = request_post_string('shipping_country', 'string', '');
+    $shipping_method = request_post_string('shipping_method', 'string', 'standard');
 
-    $billing_same = isset($_POST['billing_same']);
+    $billing_same = request_post_bool('billing_same');
 
     if ($billing_same) {
         $billing_address = $shipping_address;
@@ -57,15 +58,15 @@ function process_order()
         $billing_zip = $shipping_zip;
         $billing_country = $shipping_country;
     } else {
-        $billing_address = sanitize_input($_POST['billing_address'] ?? '', 'string');
-        $billing_city = sanitize_input($_POST['billing_city'] ?? '', 'string');
-        $billing_state = sanitize_input($_POST['billing_state'] ?? '', 'string');
-        $billing_zip = sanitize_input($_POST['billing_zip'] ?? '', 'string');
-        $billing_country = sanitize_input($_POST['billing_country'] ?? '', 'string');
+        $billing_address = request_post_string('billing_address', 'string', '');
+        $billing_city = request_post_string('billing_city', 'string', '');
+        $billing_state = request_post_string('billing_state', 'string', '');
+        $billing_zip = request_post_string('billing_zip', 'string', '');
+        $billing_country = request_post_string('billing_country', 'string', '');
     }
 
-    $payment_method = sanitize_input($_POST['payment_method'] ?? '', 'string');
-    $notes = sanitize_input($_POST['notes'] ?? '', 'string');
+    $payment_method = request_post_string('payment_method', 'string', '');
+    $notes = request_post_string('notes', 'string', '');
 
     // Validation rules
     $validation_rules = [
@@ -87,8 +88,40 @@ function process_order()
         $validation_rules['billing_country'] = ['required', 'min_length:2', 'max_length:50'];
     }
 
-    // Validate form data
-    $validation_result = validate_form_data($_POST, $validation_rules);
+    // Validate form data (sanitized)
+    $input = [
+        'shipping_address' => $shipping_address,
+        'shipping_city' => $shipping_city,
+        'shipping_state' => $shipping_state,
+        'shipping_zip' => $shipping_zip,
+        'shipping_country' => $shipping_country,
+        'shipping_method' => $shipping_method,
+        'payment_method' => $payment_method,
+        'notes' => $notes,
+    ];
+    if (!$billing_same) {
+        $input['billing_address'] = $billing_address;
+        $input['billing_city'] = $billing_city;
+        $input['billing_state'] = $billing_state;
+        $input['billing_zip'] = $billing_zip;
+        $input['billing_country'] = $billing_country;
+    }
+
+    $validation_result = request_validate($input, $validation_rules, [
+        'shipping_address' => 'string',
+        'shipping_city' => 'string',
+        'shipping_state' => 'string',
+        'shipping_zip' => 'string',
+        'shipping_country' => 'string',
+        'shipping_method' => 'string',
+        'billing_address' => 'string',
+        'billing_city' => 'string',
+        'billing_state' => 'string',
+        'billing_zip' => 'string',
+        'billing_country' => 'string',
+        'payment_method' => 'string',
+        'notes' => 'string',
+    ]);
 
     if (!$validation_result['valid']) {
         $_SESSION['validation_errors'] = $validation_result['errors'];
@@ -214,6 +247,11 @@ function process_order()
             'total' => 0,
             'count' => 0
         ];
+
+        // Clear persistent DB cart too
+        if (!empty($_SESSION['user_id'])) {
+            cart_db_clear((int) $_SESSION['user_id']);
+        }
 
         // Clear form data
         unset($_SESSION['form_data']);

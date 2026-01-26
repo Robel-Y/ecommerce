@@ -81,8 +81,20 @@ function get_flash_message()
  */
 function format_currency($amount, $currency = 'USD')
 {
-    $formatter = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
-    return $formatter->formatCurrency($amount, $currency);
+    $amount = (float) $amount;
+
+    // Some PHP installs (incl. minimal XAMPP) may not have intl enabled.
+    if (class_exists('NumberFormatter')) {
+        $formatter = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
+        $formatted = $formatter->formatCurrency($amount, $currency);
+        if ($formatted !== false) {
+            return $formatted;
+        }
+    }
+
+    // Fallback
+    $symbol = ($currency === 'USD') ? '$' : ($currency . ' ');
+    return $symbol . number_format($amount, 2);
 }
 
 /**
@@ -367,6 +379,89 @@ function get_product_by_id($product_id)
     db_query($sql);
     db_bind(':id', $product_id);
     return db_single() ?: null;
+}
+
+/**
+ * Get distinct category names from products
+ *
+ * @param int|null $limit
+ * @return array<int, string>
+ */
+function get_distinct_categories($limit = null)
+{
+    $sql = "SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category <> '' ORDER BY category";
+    if ($limit !== null) {
+        $sql .= " LIMIT :limit";
+    }
+
+    if (!db_query($sql)) {
+        return [];
+    }
+
+    if ($limit !== null) {
+        db_bind(':limit', (int) $limit, PDO::PARAM_INT);
+    }
+
+    $rows = db_result_set();
+    $categories = [];
+    foreach ($rows as $row) {
+        $cat = trim((string) ($row['category'] ?? ''));
+        if ($cat !== '') {
+            $categories[] = $cat;
+        }
+    }
+    return $categories;
+}
+
+/**
+ * Get supported order status values from DB schema.
+ *
+ * @return array<int, string>
+ */
+function get_orders_supported_statuses()
+{
+    static $cache = null;
+    if (is_array($cache)) {
+        return $cache;
+    }
+
+    // Sensible default if schema introspection fails.
+    $cache = ['pending', 'processing', 'completed', 'cancelled'];
+
+    if (!function_exists('db_query')) {
+        return $cache;
+    }
+
+    if (!db_query("SHOW COLUMNS FROM orders LIKE 'status'")) {
+        return $cache;
+    }
+
+    $row = db_single();
+    $type = (string) ($row['Type'] ?? $row['type'] ?? '');
+    if ($type === '') {
+        return $cache;
+    }
+
+    if (preg_match("/^enum\((.*)\)$/i", $type, $m) !== 1) {
+        return $cache;
+    }
+
+    // Parse enum('a','b','c') values.
+    $raw = $m[1];
+    $values = str_getcsv($raw, ',', "'");
+    $values = array_values(array_filter(array_map(static fn($v) => trim((string) $v), $values), static fn($v) => $v !== ''));
+
+    if (!empty($values)) {
+        $cache = $values;
+    }
+
+    return $cache;
+}
+
+function orders_supports_status($status)
+{
+    $status = (string) $status;
+    return in_array($status, get_orders_supported_statuses(), true);
 }
 
 /**

@@ -51,6 +51,22 @@ if (!function_exists('sanitize_input')) {
 }
 
 /**
+ * Treat null/empty-string as blank, but allow "0".
+ */
+function is_blank($value)
+{
+    if ($value === null) {
+        return true;
+    }
+
+    if (is_string($value)) {
+        return trim($value) === '';
+    }
+
+    return false;
+}
+
+/**
  * Validate email address
  */
 function validate_email($email)
@@ -67,9 +83,9 @@ function validate_email($email)
 
     $domain = explode('@', $email)[1];
     // Note: checkdnsrr might be slow on some local server setups
-    if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
-        return false;
-    }
+    // if (!checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+    //     return false;
+    // }
 
     return true;
 }
@@ -320,7 +336,7 @@ function validate_required_fields($data, $required_fields)
     $missing = [];
 
     foreach ($required_fields as $field) {
-        if (!isset($data[$field]) || empty($data[$field])) {
+        if (!array_key_exists($field, $data) || is_blank($data[$field])) {
             $missing[] = $field;
         }
     }
@@ -341,10 +357,15 @@ function validate_form_data($form_data, $validation_rules)
     $validated_data = [];
 
     foreach ($validation_rules as $field => $rules) {
-        $value = isset($form_data[$field]) ? $form_data[$field] : '';
+        $value = array_key_exists($field, $form_data) ? $form_data[$field] : '';
 
-        // Skip validation if field is empty and not required
-        if (empty($value) && !in_array('required', $rules)) {
+        // Normalize string values
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        // Skip validation if field is blank and not required
+        if (is_blank($value) && !in_array('required', $rules, true)) {
             continue;
         }
 
@@ -358,7 +379,7 @@ function validate_form_data($form_data, $validation_rules)
 
             switch ($rule_name) {
                 case 'required':
-                    if (empty($value)) {
+                    if (is_blank($value)) {
                         $is_valid = false;
                         $error_message = ucfirst(str_replace('_', ' ', $field)) . ' is required';
                     }
@@ -368,6 +389,13 @@ function validate_form_data($form_data, $validation_rules)
                     if (!validate_email($value)) {
                         $is_valid = false;
                         $error_message = 'Invalid email address';
+                    }
+                    break;
+
+                case 'phone':
+                    if (!validate_phone($value, 'US')) {
+                        $is_valid = false;
+                        $error_message = 'Invalid phone number';
                     }
                     break;
 
@@ -392,6 +420,21 @@ function validate_form_data($form_data, $validation_rules)
                     }
                     break;
 
+                case 'integer':
+                case 'int':
+                    if (filter_var($value, FILTER_VALIDATE_INT) === false) {
+                        $is_valid = false;
+                        $error_message = 'Must be an integer';
+                    }
+                    break;
+
+                case 'float':
+                    if (filter_var($value, FILTER_VALIDATE_FLOAT) === false) {
+                        $is_valid = false;
+                        $error_message = 'Must be a valid number';
+                    }
+                    break;
+
                 case 'alpha':
                     if (!ctype_alpha(str_replace(' ', '', $value))) {
                         $is_valid = false;
@@ -411,6 +454,43 @@ function validate_form_data($form_data, $validation_rules)
                     if (!isset($form_data[$match_field]) || $value !== $form_data[$match_field]) {
                         $is_valid = false;
                         $error_message = 'Fields do not match';
+                    }
+                    break;
+
+                case 'in':
+                    $allowed = array_filter(array_map('trim', explode(',', (string) $rule_param)), 'strlen');
+                    if (!in_array((string) $value, $allowed, true)) {
+                        $is_valid = false;
+                        $error_message = 'Invalid value';
+                    }
+                    break;
+
+                case 'min':
+                    if (!is_numeric($value) || (float) $value < (float) $rule_param) {
+                        $is_valid = false;
+                        $error_message = "Must be at least {$rule_param}";
+                    }
+                    break;
+
+                case 'max':
+                    if (!is_numeric($value) || (float) $value > (float) $rule_param) {
+                        $is_valid = false;
+                        $error_message = "Must be at most {$rule_param}";
+                    }
+                    break;
+
+                case 'url':
+                    if (filter_var($value, FILTER_VALIDATE_URL) === false) {
+                        $is_valid = false;
+                        $error_message = 'Invalid URL';
+                    }
+                    break;
+
+                case 'date':
+                    $format = $rule_param ?: 'Y-m-d';
+                    if (!validate_date((string) $value, $format)) {
+                        $is_valid = false;
+                        $error_message = 'Invalid date';
                     }
                     break;
 

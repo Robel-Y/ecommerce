@@ -9,11 +9,11 @@
             <div class="footer-col">
                 <div class="footer-logo">
                     <div class="logo-icon">
-                        <i class="fas fa-shopping-bag"></i>
+                        <img src="<?php echo SITE_URL; ?>assets/images/icons/favicon.ico" alt="Merkato Go">
                     </div>
                     <div class="logo-text">
-                        <span class="logo-main">Modern</span>
-                        <span class="logo-sub">Shop</span>
+                        <span class="logo-main">Merkato</span>
+                        <span class="logo-sub">Go</span>
                     </div>
                 </div>
                 <p class="footer-description">
@@ -82,7 +82,7 @@
                     </li>
                     <li>
                         <i class="fas fa-envelope"></i>
-                        <span>support@modernshop.com</span>
+                        <span><?php echo defined('SITE_EMAIL') ? SITE_EMAIL : 'support@merkato.com'; ?></span>
                     </li>
                     <li>
                         <i class="fas fa-clock"></i>
@@ -90,14 +90,7 @@
                     </li>
                 </ul>
 
-                <div class="newsletter">
-                    <h4>Newsletter</h4>
-                    <p>Subscribe for latest updates</p>
-                    <form class="footer-newsletter">
-                        <input type="email" placeholder="Your email" required>
-                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
-                    </form>
-                </div>
+                
             </div>
         </div>
 
@@ -116,7 +109,7 @@
             </div>
 
             <div class="copyright">
-                <p>&copy; <?php echo date('Y'); ?> Modern Shop. All rights reserved.</p>
+                <p>&copy; <?php echo date('Y'); ?> <?php echo defined('SITE_NAME') ? SITE_NAME : 'Merkato Go'; ?>. All rights reserved.</p>
                 <p>Made with <i class="fas fa-heart"></i> for better shopping experience</p>
             </div>
 
