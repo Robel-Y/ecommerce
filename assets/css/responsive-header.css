@@ -1,0 +1,184 @@
+/* ============================================
+   RESPONSIVE HEADER CSS - Mobile Navigation
+   ============================================ */
+
+/* Mobile Header Specific Styles */
+@media (max-width: 768px) {
+    /* Sticky Mobile Header */
+    .main-header.sticky {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+        from {
+            transform: translateY(-100%);
+        }
+        to {
+            transform: translateY(0);
+        }
+    }
+    
+    /* Mobile Search Enhancement */
+    .mobile-search input {
+        background: var(--light-color);
+        border: 2px solid transparent;
+    }
+    
+    .mobile-search input:focus {
+        border-color: var(--primary-color);
+        background: var(--white);
+    }
+    
+    /* Mobile User Menu Animation */
+    .mobile-user-menu a {
+        animation: slideInLeft 0.3s ease forwards;
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    
+    .mobile-user-menu a:nth-child(1) { animation-delay: 0.1s; }
+    .mobile-user-menu a:nth-child(2) { animation-delay: 0.2s; }
+    .mobile-user-menu a:nth-child(3) { animation-delay: 0.3s; }
+    .mobile-user-menu a:nth-child(4) { animation-delay: 0.4s; }
+    .mobile-user-menu a:nth-child(5) { animation-delay: 0.5s; }
+    .mobile-user-menu a:nth-child(6) { animation-delay: 0.6s; }
+    
+    @keyframes slideInLeft {
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Mobile Categories Animation */
+    .mobile-categories a {
+        animation: fadeInUp 0.3s ease forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    
+    .mobile-categories a:nth-child(2) { animation-delay: 0.1s; }
+    .mobile-categories a:nth-child(3) { animation-delay: 0.2s; }
+    .mobile-categories a:nth-child(4) { animation-delay: 0.3s; }
+    .mobile-categories a:nth-child(5) { animation-delay: 0.4s; }
+    .mobile-categories a:nth-child(6) { animation-delay: 0.5s; }
+    .mobile-categories a:nth-child(7) { animation-delay: 0.6s; }
+    
+    /* Backdrop for Mobile Menu */
+    .mobile-menu::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .mobile-menu.active::before {
+        opacity: 1;
+    }
+    
+    /* Improved Mobile Menu Scroll */
+    .mobile-menu {
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) var(--light-color);
+    }
+    
+    .mobile-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .mobile-menu::-webkit-scrollbar-track {
+        background: var(--light-color);
+    }
+    
+    .mobile-menu::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 3px;
+    }
+}
+
+/* Tablet Landscape */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: landscape) {
+    .main-nav {
+        padding: 10px 0;
+    }
+    
+    .logo-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1.1rem;
+    }
+    
+    .search-input {
+        padding: 10px 45px 10px 15px;
+    }
+    
+    .user-dropdown {
+        min-width: 160px;
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .categories-list a {
+        padding: 12px 15px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Large Mobile (576px - 768px) */
+@media (min-width: 576px) and (max-width: 768px) {
+    .mobile-menu {
+        width: 400px;
+        right: auto;
+        box-shadow: 5px 0 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .mobile-menu.active {
+        transform: translateX(0);
+    }
+}
+
+/* Small Mobile (≤ 375px) */
+@media (max-width: 375px) {
+    .mobile-menu {
+        width: 100%;
+    }
+    
+    .mobile-logo {
+        font-size: 1.3rem;
+    }
+    
+    .mobile-logo i {
+        font-size: 1.5rem;
+    }
+    
+    .mobile-search input {
+        font-size: 0.9rem;
+    }
+    
+    .mobile-user-info i {
+        font-size: 2rem;
+    }
+    
+    .mobile-user-name {
+        font-size: 0.95rem;
+    }
+    
+    .mobile-user-email {
+        font-size: 0.8rem;
+    }
+    
+    .mobile-user-menu a,
+    .mobile-categories a {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+}

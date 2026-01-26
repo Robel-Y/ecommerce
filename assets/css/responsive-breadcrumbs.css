@@ -1,0 +1,292 @@
+/* ============================================
+   RESPONSIVE BREADCRUMBS CSS - Mobile Breadcrumbs
+   ============================================ */
+
+/* Tablet Styles (768px - 1024px) */
+@media (max-width: 1024px) {
+    .breadcrumbs {
+        padding: 18px 0;
+        margin-bottom: 35px;
+    }
+    
+    .breadcrumbs ol {
+        gap: 6px;
+    }
+    
+    .breadcrumbs li {
+        font-size: 0.925rem;
+    }
+    
+    .breadcrumbs li a {
+        padding: 5px 9px;
+    }
+    
+    .breadcrumbs li.active {
+        padding: 5px 10px;
+    }
+}
+
+/* Mobile Styles (≤ 768px) */
+@media (max-width: 768px) {
+    .breadcrumbs {
+        padding: 15px 0;
+        margin-bottom: 30px;
+        position: relative;
+    }
+    
+    /* Add mobile-specific breadcrumb styling */
+    .breadcrumb-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--primary-color);
+        color: var(--white);
+        text-decoration: none;
+        border-radius: var(--radius-md);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-back:hover {
+        background: var(--primary-dark);
+        transform: translateX(-3px);
+    }
+    
+    .breadcrumbs ol {
+        flex-wrap: wrap;
+        gap: 4px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .breadcrumbs li {
+        font-size: 0.85rem;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .breadcrumbs li a {
+        padding: 4px 8px;
+        border-radius: 3px;
+    }
+    
+    .breadcrumbs li.active {
+        padding: 4px 8px;
+        max-width: none;
+        overflow: visible;
+    }
+    
+    .breadcrumbs li:not(:last-child)::after {
+        margin-left: 6px;
+    }
+    
+    /* Hide icons on very small screens */
+    @media (max-width: 480px) {
+        .breadcrumbs li a i,
+        .breadcrumbs li i {
+            display: none;
+        }
+        
+        .breadcrumbs li:first-child a::before {
+            content: '🏠';
+            margin-right: 3px;
+        }
+    }
+    
+    /* Truncate long breadcrumb text */
+    .breadcrumbs li.truncate {
+        max-width: 150px;
+    }
+    
+    .breadcrumbs li.truncate a,
+    .breadcrumbs li.truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Small Mobile (≤ 480px) */
+@media (max-width: 480px) {
+    .breadcrumbs {
+        padding: 12px 0;
+        margin-bottom: 25px;
+    }
+    
+    .breadcrumb-back {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+    }
+    
+    .breadcrumbs ol {
+        padding-top: 8px;
+    }
+    
+    .breadcrumbs li {
+        font-size: 0.8rem;
+        max-width: 120px;
+    }
+    
+    .breadcrumbs li a {
+        padding: 3px 6px;
+    }
+    
+    .breadcrumbs li.active {
+        padding: 3px 6px;
+    }
+    
+    /* Compact breadcrumb style for mobile */
+    .breadcrumbs.compact {
+        padding: 8px 0;
+    }
+    
+    .breadcrumbs.compact li {
+        font-size: 0.75rem;
+        max-width: 100px;
+    }
+    
+    .breadcrumbs.compact li:not(:last-child)::after {
+        margin-left: 4px;
+        font-size: 0.9rem;
+    }
+    
+    /* Mobile breadcrumb with dots */
+    .breadcrumbs.dots-style li:not(:last-child)::after {
+        content: '•';
+        margin-left: 6px;
+        color: var(--primary-color);
+    }
+}
+
+/* Landscape Mode */
+@media (max-height: 600px) and (orientation: landscape) {
+    .breadcrumbs {
+        padding: 10px 0;
+        margin-bottom: 20px;
+    }
+    
+    .breadcrumbs ol {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 3px;
+    }
+    
+    .breadcrumbs li {
+        flex-shrink: 0;
+    }
+    
+    .breadcrumb-back {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+        margin-right: 10px;
+        margin-bottom: 0;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .breadcrumbs li a {
+        padding: 8px 12px;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .breadcrumbs li.active {
+        padding: 8px 12px;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    /* Increase tap target size */
+    .breadcrumb-back {
+        padding: 10px 15px;
+        min-height: 44px;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .breadcrumbs {
+        background: var(--white);
+        border: 2px solid #000;
+    }
+    
+    .breadcrumbs li a {
+        color: #000;
+        text-decoration: underline;
+    }
+    
+    .breadcrumbs li.active {
+        background: #000;
+        color: var(--white);
+        font-weight: bold;
+    }
+    
+    .breadcrumbs li:not(:last-child)::after {
+        color: #000;
+        font-weight: bold;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .breadcrumbs li a,
+    .breadcrumbs li.active,
+    .breadcrumb-back {
+        transition: none;
+    }
+    
+    .breadcrumbs li.animate-in {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .breadcrumbs {
+        display: block !important;
+        background: none !important;
+        border: none !important;
+        padding: 10px 0 !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .breadcrumb-back {
+        display: none !important;
+    }
+    
+    .breadcrumbs ol {
+        flex-wrap: wrap !important;
+        overflow: visible !important;
+    }
+    
+    .breadcrumbs li {
+        color: #000 !important;
+        max-width: none !important;
+        overflow: visible !important;
+    }
+    
+    .breadcrumbs li a {
+        color: #000 !important;
+        text-decoration: none !important;
+    }
+    
+    .breadcrumbs li.active {
+        font-weight: bold !important;
+        background: none !important;
+        color: #000 !important;
+    }
+    
+    .breadcrumbs li:not(:last-child)::after {
+        color: #000 !important;
+    }
+}
