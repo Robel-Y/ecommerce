@@ -21,10 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect_with_message('user/login.php', 'error', 'Invalid request method');
 }
 
-// Validate CSRF token
-if (!isset($_POST['csrf_token']) || !validate_csrf_token($_POST['csrf_token'])) {
-    redirect_with_message('user/login.php', 'error', 'Invalid security token');
-}
+
 
 // Get form data
 $email = sanitize_input($_POST['email'] ?? '', 'email');
@@ -44,18 +41,18 @@ if (!validate_email($email)) {
 }
 
 // Verify login credentials
-$login_result = verify_login($email, $password, $db);
+$login_result = verify_login($email, $password);
 
 if (!$login_result['success']) {
     // Record failed login attempt
     $ip = get_client_ip();
     record_failed_login($email, $ip);
-    
+
     // Check if account is locked
     if (!check_login_attempts($email, $ip)) {
         redirect_with_message('user/login.php', 'error', 'Account locked due to too many failed attempts. Please try again later.');
     }
-    
+
     redirect_with_message('user/login.php', 'error', $login_result['errors'][0] ?? 'Invalid credentials');
 }
 

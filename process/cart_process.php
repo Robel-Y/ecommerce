@@ -13,13 +13,14 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include required files
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
+require_once __DIR__ . '/../functions/utilities.php';
 
 // Set JSON header for AJAX responses
 header('Content-Type: application/json');
 
 // Check if request is AJAX
-$is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
-           strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+$is_ajax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 
 // Initialize response array
 $response = [
@@ -46,23 +47,23 @@ switch ($action) {
     case 'add':
         $response = handle_add_to_cart();
         break;
-        
+
     case 'update':
         $response = handle_update_cart();
         break;
-        
+
     case 'remove':
         $response = handle_remove_from_cart();
         break;
-        
+
     case 'clear':
         $response = handle_clear_cart();
         break;
-        
+
     case 'get':
         $response = handle_get_cart();
         break;
-        
+
     default:
         $response['message'] = 'Invalid action';
         break;
@@ -86,9 +87,10 @@ if ($is_ajax) {
 /**
  * Handle add to cart action
  */
-function handle_add_to_cart() {
+function handle_add_to_cart()
+{
     global $db;
-    
+
     // Validate required fields
     if (!isset($_POST['product_id']) || !isset($_POST['quantity'])) {
         return [
@@ -96,27 +98,27 @@ function handle_add_to_cart() {
             'message' => 'Missing required fields'
         ];
     }
-    
-    $product_id = (int)sanitize_input($_POST['product_id'], 'int');
-    $quantity = (int)sanitize_input($_POST['quantity'], 'int');
-    
+
+    $product_id = (int) sanitize_input($_POST['product_id'], 'int');
+    $quantity = (int) sanitize_input($_POST['quantity'], 'int');
+
     if ($product_id <= 0 || $quantity <= 0) {
         return [
             'success' => false,
             'message' => 'Invalid product or quantity'
         ];
     }
-    
+
     // Get product details from database
-    $product = get_product_by_id($product_id, $db);
-    
+    $product = get_product_by_id($product_id);
+
     if (!$product) {
         return [
             'success' => false,
             'message' => 'Product not found'
         ];
     }
-    
+
     // Check stock availability
     if ($product['stock'] < $quantity) {
         return [
@@ -124,23 +126,23 @@ function handle_add_to_cart() {
             'message' => 'Insufficient stock. Only ' . $product['stock'] . ' available'
         ];
     }
-    
+
     // Check if product is already in cart
     $cart_items = $_SESSION['cart']['items'];
     $existing_item_index = -1;
-    
+
     foreach ($cart_items as $index => $item) {
         if ($item['id'] == $product_id) {
             $existing_item_index = $index;
             break;
         }
     }
-    
+
     // Add or update item
     if ($existing_item_index >= 0) {
         // Update existing item quantity
         $new_quantity = $cart_items[$existing_item_index]['quantity'] + $quantity;
-        
+
         // Check stock again with new quantity
         if ($product['stock'] < $new_quantity) {
             return [
@@ -148,7 +150,7 @@ function handle_add_to_cart() {
                 'message' => 'Cannot add more than available stock'
             ];
         }
-        
+
         $_SESSION['cart']['items'][$existing_item_index]['quantity'] = $new_quantity;
         $message = 'Quantity updated in cart';
     } else {
@@ -156,19 +158,19 @@ function handle_add_to_cart() {
         $cart_item = [
             'id' => $product_id,
             'name' => $product['name'],
-            'price' => (float)$product['price'],
+            'price' => (float) $product['price'],
             'image' => $product['image_url'] ?? '',
             'quantity' => $quantity,
             'stock' => $product['stock']
         ];
-        
+
         $_SESSION['cart']['items'][] = $cart_item;
         $message = 'Product added to cart';
     }
-    
+
     // Update cart totals
     update_cart_totals();
-    
+
     return [
         'success' => true,
         'message' => $message,
@@ -180,7 +182,8 @@ function handle_add_to_cart() {
 /**
  * Handle update cart action
  */
-function handle_update_cart() {
+function handle_update_cart()
+{
     // Validate required fields
     if (!isset($_POST['product_id']) || !isset($_POST['quantity'])) {
         return [
@@ -188,65 +191,65 @@ function handle_update_cart() {
             'message' => 'Missing required fields'
         ];
     }
-    
-    $product_id = (int)sanitize_input($_POST['product_id'], 'int');
-    $quantity = (int)sanitize_input($_POST['quantity'], 'int');
-    
+
+    $product_id = (int) sanitize_input($_POST['product_id'], 'int');
+    $quantity = (int) sanitize_input($_POST['quantity'], 'int');
+
     if ($product_id <= 0) {
         return [
             'success' => false,
             'message' => 'Invalid product'
         ];
     }
-    
+
     // Find item in cart
     $cart_items = $_SESSION['cart']['items'];
     $item_index = -1;
-    
+
     foreach ($cart_items as $index => $item) {
         if ($item['id'] == $product_id) {
             $item_index = $index;
             break;
         }
     }
-    
+
     if ($item_index < 0) {
         return [
             'success' => false,
             'message' => 'Product not found in cart'
         ];
     }
-    
+
     // Handle quantity
     if ($quantity <= 0) {
         // Remove item if quantity is 0 or negative
         return handle_remove_item($product_id);
     }
-    
+
     // Check stock availability
     global $db;
-    $product = get_product_by_id($product_id, $db);
-    
+    $product = get_product_by_id($product_id);
+
     if (!$product) {
         return [
             'success' => false,
             'message' => 'Product not found'
         ];
     }
-    
+
     if ($product['stock'] < $quantity) {
         return [
             'success' => false,
             'message' => 'Insufficient stock. Only ' . $product['stock'] . ' available'
         ];
     }
-    
+
     // Update quantity
     $_SESSION['cart']['items'][$item_index]['quantity'] = $quantity;
-    
+
     // Update cart totals
     update_cart_totals();
-    
+
     return [
         'success' => true,
         'message' => 'Cart updated',
@@ -259,7 +262,8 @@ function handle_update_cart() {
 /**
  * Handle remove from cart action
  */
-function handle_remove_from_cart() {
+function handle_remove_from_cart()
+{
     // Validate required fields
     if (!isset($_POST['product_id'])) {
         return [
@@ -267,22 +271,23 @@ function handle_remove_from_cart() {
             'message' => 'Missing product ID'
         ];
     }
-    
-    $product_id = (int)sanitize_input($_POST['product_id'], 'int');
-    
+
+    $product_id = (int) sanitize_input($_POST['product_id'], 'int');
+
     return handle_remove_item($product_id);
 }
 
 /**
  * Handle clear cart action
  */
-function handle_clear_cart() {
+function handle_clear_cart()
+{
     $_SESSION['cart'] = [
         'items' => [],
         'total' => 0,
         'count' => 0
     ];
-    
+
     return [
         'success' => true,
         'message' => 'Cart cleared',
@@ -294,13 +299,14 @@ function handle_clear_cart() {
 /**
  * Handle get cart action
  */
-function handle_get_cart() {
+function handle_get_cart()
+{
     $cart_data = [
         'items' => $_SESSION['cart']['items'],
         'total' => $_SESSION['cart']['total'],
         'count' => $_SESSION['cart']['count']
     ];
-    
+
     return [
         'success' => true,
         'message' => 'Cart data retrieved',
@@ -311,21 +317,22 @@ function handle_get_cart() {
 /**
  * Remove item from cart
  */
-function handle_remove_item($product_id) {
+function handle_remove_item($product_id)
+{
     $cart_items = $_SESSION['cart']['items'];
     $new_items = [];
-    
+
     foreach ($cart_items as $item) {
         if ($item['id'] != $product_id) {
             $new_items[] = $item;
         }
     }
-    
+
     $_SESSION['cart']['items'] = $new_items;
-    
+
     // Update cart totals
     update_cart_totals();
-    
+
     return [
         'success' => true,
         'message' => 'Product removed from cart',
@@ -337,39 +344,31 @@ function handle_remove_item($product_id) {
 /**
  * Update cart totals
  */
-function update_cart_totals() {
+function update_cart_totals()
+{
     $total = 0;
     $count = 0;
-    
+
     foreach ($_SESSION['cart']['items'] as $item) {
         $item_total = $item['price'] * $item['quantity'];
         $total += $item_total;
         $count += $item['quantity'];
     }
-    
+
     $_SESSION['cart']['total'] = $total;
     $_SESSION['cart']['count'] = $count;
+
+    // Legacy convenience key used by some templates
+    $_SESSION['cart_count'] = $count;
 }
 
 /**
  * Get product by ID from database
  */
-function get_product_by_id($product_id, $connection) {
-    $query = "SELECT id, name, price, image_url, stock, status FROM products WHERE id = ? AND status = 'active'";
-    $stmt = $connection->prepare($query);
-    $stmt->bind_param('i', $product_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $product = $result->fetch_assoc();
-    $stmt->close();
-    
-    return $product ?: null;
-}
+// get_product_by_id removed (available in functions/utilities.php)
 
 /**
  * Format currency
  */
-function format_currency($amount) {
-    return number_format($amount, 2, '.', ',');
-}
+// format_currency removed (available in functions/utilities.php)
 ?>
