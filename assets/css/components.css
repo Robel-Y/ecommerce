@@ -1,0 +1,272 @@
+/* ============================================
+   COMPONENTS CSS - Breadcrumbs & UI Components
+   ============================================ */
+
+/* Breadcrumbs */
+.breadcrumbs {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    padding: 20px 0;
+    border-bottom: 1px solid var(--light-200);
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+}
+
+.breadcrumbs::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color), #818cf8);
+}
+
+.breadcrumbs .container {
+    position: relative;
+    z-index: 1;
+}
+
+.breadcrumbs nav[aria-label="breadcrumb"] {
+    font-family: 'Inter', sans-serif;
+}
+
+.breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 8px;
+}
+
+.breadcrumbs li {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.breadcrumbs li:not(:last-child)::after {
+    content: '/';
+    margin-left: 8px;
+    color: #cbd5e0;
+    font-weight: 300;
+}
+
+.breadcrumbs li a {
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.breadcrumbs li a:hover {
+    color: var(--primary-color);
+    background: rgba(79, 70, 229, 0.05);
+    transform: translateY(-1px);
+}
+
+.breadcrumbs li a:active {
+    transform: translateY(0);
+}
+
+.breadcrumbs li a i {
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.breadcrumbs li a:hover i {
+    opacity: 1;
+    transform: translateX(2px);
+}
+
+.breadcrumbs li.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    padding: 4px 12px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: 4px;
+    animation: breadcrumbActive 0.3s ease;
+}
+
+@keyframes breadcrumbActive {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Breadcrumb Animation for Home Icon */
+.breadcrumbs li:first-child a::before {
+    content: '🏠';
+    margin-right: 5px;
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.breadcrumbs li:first-child a:hover::before {
+    transform: scale(1.1);
+}
+
+/* Breadcrumb Chevron Alternative (if you want to use icons instead of slashes) */
+.breadcrumbs.chevron-style li:not(:last-child)::after {
+    content: '›';
+    margin-left: 8px;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+/* Breadcrumb Arrow Style */
+.breadcrumbs.arrow-style {
+    background: var(--white);
+    border: 1px solid var(--light-200);
+    border-radius: var(--radius-lg);
+    padding: 15px 20px;
+    margin: 20px auto 30px;
+    box-shadow: var(--shadow-sm);
+}
+
+.breadcrumbs.arrow-style li {
+    position: relative;
+    padding-right: 25px;
+}
+
+.breadcrumbs.arrow-style li:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a0aec0;
+    font-weight: 300;
+}
+
+.breadcrumbs.arrow-style li.active {
+    background: none;
+    color: var(--text-color);
+    font-weight: 500;
+    padding: 0;
+}
+
+/* Responsive Breadcrumbs */
+@media (max-width: 768px) {
+    .breadcrumbs {
+        padding: 15px 0;
+        margin-bottom: 30px;
+    }
+    
+    .breadcrumbs ol {
+        gap: 5px;
+    }
+    
+    .breadcrumbs li {
+        font-size: 0.9rem;
+    }
+    
+    .breadcrumbs li a {
+        padding: 3px 6px;
+    }
+    
+    .breadcrumbs li.active {
+        padding: 3px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .breadcrumbs {
+        padding: 12px 0;
+        margin-bottom: 20px;
+    }
+    
+    .breadcrumbs ol {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    
+    .breadcrumbs ol::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .breadcrumbs ol::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 2px;
+    }
+    
+    .breadcrumbs ol::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 2px;
+    }
+    
+    .breadcrumbs li {
+        white-space: nowrap;
+    }
+    
+    .breadcrumbs li:first-child a::before {
+        content: '🏠';
+        margin-right: 3px;
+    }
+}
+
+/* Breadcrumb with Icons */
+.breadcrumbs.icon-style li a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+}
+
+.breadcrumbs.icon-style li a i {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* Dark Theme Breadcrumbs */
+.dark-theme .breadcrumbs {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    border-bottom-color: #4a5568;
+}
+
+.dark-theme .breadcrumbs li {
+    color: #cbd5e0;
+}
+
+.dark-theme .breadcrumbs li a {
+    color: #e2e8f0;
+}
+
+.dark-theme .breadcrumbs li a:hover {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .breadcrumbs li.active {
+    color: #818cf8;
+    background: rgba(129, 140, 248, 0.1);
+}
+
+.dark-theme .breadcrumbs li:not(:last-child)::after {
+    color: #718096;
+}
+
+/* Print Styles */
+@media print {
+    .breadcrumbs {
+        display: none;
+    }
+}
