@@ -1,218 +1,256 @@
 <?php
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
-    require_once '../config/constants.php';
+    require_once __DIR__ . '/../config/constants.php';
 }
 
-// Get cart count from session
-$cart_count = isset($_SESSION['cart_count']) ? $_SESSION['cart_count'] : 0;
+// Get cart count from session (support both legacy and current cart session shapes)
+$cart_count = 0;
+if (isset($_SESSION['cart']['count'])) {
+    $cart_count = (int) $_SESSION['cart']['count'];
+} elseif (isset($_SESSION['cart_count'])) {
+    $cart_count = (int) $_SESSION['cart_count'];
+}
 ?>
-<!-- Header Section -->
-<header class="main-header">
-    <div class="container">
-        <!-- Top Bar -->
-        <div class="top-bar">
-            <div class="top-bar-left">
-                <span><i class="fas fa-phone-alt"></i> +1 (555) 123-4567</span>
-                <span><i class="fas fa-envelope"></i> support@modernshop.com</span>
-            </div>
-            <div class="top-bar-right">
-                <?php if (isset($_SESSION['user_id'])): ?>
-                    <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?>!</span>
-                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                        <a href="admin/dashboard.php" class="admin-link">
-                            <i class="fas fa-cog"></i> Admin Panel
-                        </a>
-                    <?php endif; ?>
-                <?php else: ?>
-                    <a href="user/register.php" class="register-link">Create Account</a>
-                <?php endif; ?>
-            </div>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
 
-        <!-- Main Navigation -->
-        <nav class="main-nav">
-            <!-- Logo -->
-            <div class="logo">
-                <a href="<?php echo SITE_URL; ?>index.php">
-                    <div class="logo-icon">
-                        <i class="fas fa-shopping-bag"></i>
-                    </div>
-                    <div class="logo-text">
-                        <span class="logo-main">Modern</span>
-                        <span class="logo-sub">Shop</span>
-                    </div>
-                </a>
-            </div>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title ?? 'Modern Shop'; ?></title>
 
-            <!-- Search Bar -->
-            <div class="search-container">
-                <form class="search-form" action="products/all.php" method="GET">
-                    <input type="text" name="search" placeholder="Search products..." class="search-input">
-                    <button type="submit" class="search-button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
-            </div>
+    <script>
+        (function() {
+            try {
+                var mode = localStorage.getItem('theme_mode');
+                if (mode === 'light' || mode === 'dark') {
+                    document.documentElement.setAttribute('data-theme', mode);
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                }
+            } catch (e) {}
+        })();
+    </script>
 
-            <!-- User Actions -->
-            <div class="user-actions">
-                <!-- Cart -->
-                <div class="cart-icon">
-                    <a href="user/cart.php" class="cart-link">
-                        <i class="fas fa-shopping-cart"></i>
-                        <?php if ($cart_count > 0): ?>
-                            <span class="cart-count"><?php echo $cart_count; ?></span>
-                        <?php endif; ?>
+    <!-- Icons & Fonts (used across UI) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="assets/images/icons/favicon.ico" type="image/x-icon">
+    
+    <!-- Global Variables & Base Styles -->
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/variables.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/layout.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/components.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/forms.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/buttons.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/notifications.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/footer.css">
+
+    <!-- Component & Animation Styles -->
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/animations-header.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/animations-footer.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/animations.css">
+
+    <!-- Responsive Design -->
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive-header.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive-footer.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive.css">
+
+    <!-- Modern theme overrides (keep last) -->
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/modern.css">
+
+    <?php
+    $current_path = $_SERVER['PHP_SELF'] ?? '';
+    $current_file = basename($current_path);
+    $is_products_area = strpos($current_path, '/products/') !== false;
+    $is_home = ($current_file === 'index.php' || $current_file === '');
+    ?>
+
+    <!-- Products/Category styles (only where needed) -->
+    <?php if ($is_products_area || $is_home): ?>
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/products.css">
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive-products.css">
+    <?php endif; ?>
+    <?php if ($current_file === 'category.php'): ?>
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/category.css">
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive-category.css">
+    <?php endif; ?>
+
+    <!-- Profile CSS (only on profile.php) -->
+    <?php if ($current_file === 'profile.php'): ?>
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/profile.css">
+    <?php endif; ?>
+
+    <!-- Home Page CSS (only on index.php) -->
+    <?php if ($is_home): ?>
+        <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/main.css">
+    <?php endif; ?>
+
+    <script>
+        // Keep both for compatibility: some scripts reference global SITE_URL, others use window.SITE_URL
+        window.SITE_URL = '<?php echo SITE_URL; ?>';
+        const SITE_URL = '<?php echo SITE_URL; ?>';
+    </script>
+</head>
+
+<body>
+
+    <!-- Header Section -->
+    <header class="main-header">
+
+        <div class="container">
+            <!-- Main Navigation -->
+            <nav class="main-nav">
+                <!-- Logo -->
+                <div class="logo">
+                    <a href="<?php echo SITE_URL; ?>index.php">
+                        <div class="logo-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="logo-text">
+                            <span class="logo-main">Modern</span>
+                            <span class="logo-sub">Shop</span>
+                        </div>
                     </a>
                 </div>
 
-                <!-- User Menu -->
-                <div class="user-menu">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <div class="dropdown">
-                            <button class="user-dropdown">
-                                <i class="fas fa-user-circle"></i>
-                                <span class="user-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                            <div class="dropdown-content">
-                                <a href="user/profile.php"><i class="fas fa-user"></i> My Profile</a>
-                                <a href="user/orders.php"><i class="fas fa-box"></i> My Orders</a>
-                                <a href="user/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <a href="user/login.php" class="login-btn">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </a>
-                    <?php endif; ?>
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <form class="search-form" action="<?php echo SITE_URL; ?>products/all.php" method="GET">
+                        <input type="text" name="search" placeholder="Search products..." class="search-input" autocomplete="off">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <div class="search-suggestions" aria-label="Search suggestions" role="listbox" hidden></div>
+                    </form>
                 </div>
-            </div>
 
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
-            </button>
-        </nav>
+                <!-- User Actions -->
+                <div class="user-actions">
+                    <button type="button" class="theme-toggle" aria-label="Theme: System" title="Theme: System">
+                        <i class="fas fa-circle-half-stroke"></i>
+                    </button>
 
-        <!-- Categories Navigation -->
-        <div class="categories-nav">
-            <ul class="categories-list">
-                <li><a href="products/all.php?category=electronics"><i class="fas fa-laptop"></i> Electronics</a></li>
-                <li><a href="products/all.php?category=fashion"><i class="fas fa-tshirt"></i> Fashion</a></li>
-                <li><a href="products/all.php?category=home"><i class="fas fa-home"></i> Home & Garden</a></li>
-                <li><a href="products/all.php?category=sports"><i class="fas fa-basketball-ball"></i> Sports</a></li>
-                <li><a href="products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a></li>
-                <li><a href="products/all.php?category=books"><i class="fas fa-book"></i> Books</a></li>
-            </ul>
-        </div>
-    </div>
+                    <!-- Cart -->
+                    <div class="cart-icon">
+                        <a href="<?php echo SITE_URL; ?>user/cart.php" class="cart-link">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-count" style="<?php echo ($cart_count > 0) ? '' : 'display:none;'; ?>">
+                                <?php echo $cart_count; ?>
+                            </span>
+                        </a>
+                    </div>
 
-    <!-- Mobile Menu -->
-    <div class="mobile-menu">
-        <div class="mobile-menu-header">
-            <div class="mobile-logo">
-                <i class="fas fa-shopping-bag"></i>
-                <span>Modern Shop</span>
-            </div>
-            <button class="mobile-menu-close">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <div class="mobile-search">
-            <form action="products/all.php" method="GET">
-                <input type="text" name="search" placeholder="Search products...">
-                <button type="submit"><i class="fas fa-search"></i></button>
-            </form>
-        </div>
-        
-        <div class="mobile-user-menu">
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <div class="mobile-user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <div>
-                        <span class="mobile-user-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
-                        <span class="mobile-user-email"><?php echo htmlspecialchars($_SESSION['user_email'] ?? ''); ?></span>
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <?php if (isset($_SESSION['user_id'])): ?>
+                            <div class="dropdown">
+                                <button class="user-dropdown">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span
+                                        class="user-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="dropdown-content">
+                                    <a href="<?php echo SITE_URL; ?>user/profile.php"><i class="fas fa-user"></i> My
+                                        Profile</a>
+                                    <a href="<?php echo SITE_URL; ?>user/orders.php"><i class="fas fa-box"></i> My
+                                        Orders</a>
+                                    <a href="<?php echo SITE_URL; ?>user/logout.php"><i class="fas fa-sign-out-alt"></i>
+                                        Logout</a>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <a href="<?php echo SITE_URL; ?>user/login.php" class="login-btn">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </div>
-                <a href="user/profile.php"><i class="fas fa-user"></i> My Profile</a>
-                <a href="user/orders.php"><i class="fas fa-box"></i> My Orders</a>
-                <a href="user/cart.php"><i class="fas fa-shopping-cart"></i> Cart 
-                    <?php if ($cart_count > 0): ?>
-                        <span class="mobile-cart-count"><?php echo $cart_count; ?></span>
-                    <?php endif; ?>
-                </a>
-                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
-                    <a href="admin/dashboard.php"><i class="fas fa-cog"></i> Admin Panel</a>
-                <?php endif; ?>
-                <a href="user/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
-            <?php else: ?>
-                <a href="user/login.php"><i class="fas fa-sign-in-alt"></i> Login</a>
-                <a href="user/register.php"><i class="fas fa-user-plus"></i> Register</a>
-            <?php endif; ?>
-        </div>
-        
-        <div class="mobile-categories">
-            <h3>Categories</h3>
-            <a href="products/all.php?category=electronics"><i class="fas fa-laptop"></i> Electronics</a>
-            <a href="products/all.php?category=fashion"><i class="fas fa-tshirt"></i> Fashion</a>
-            <a href="products/all.php?category=home"><i class="fas fa-home"></i> Home & Garden</a>
-            <a href="products/all.php?category=sports"><i class="fas fa-basketball-ball"></i> Sports</a>
-            <a href="products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a>
-            <a href="products/all.php?category=books"><i class="fas fa-book"></i> Books</a>
-        </div>
-    </div>
-</header>
 
-<!-- Flash Message Display -->
-<?php
-if (isset($_SESSION['flash_message'])) {
-    $message = $_SESSION['flash_message'];
-    unset($_SESSION['flash_message']);
-    ?>
-    <div class="flash-message flash-<?php echo $message['type']; ?>">
-        <div class="flash-content">
-            <i class="fas fa-<?php echo $message['type'] === 'success' ? 'check-circle' : ($message['type'] === 'error' ? 'exclamation-circle' : 'info-circle'); ?>"></i>
-            <span><?php echo htmlspecialchars($message['text']); ?></span>
-        </div>
-        <button class="flash-close"><i class="fas fa-times"></i></button>
-    </div>
-    <?php
-}
-?>
-
-<!-- Main Content Wrapper -->
-<main class="main-content">
-    <!-- Page Header if needed -->
-    <?php if (isset($page_title) && !isset($hide_page_header)): ?>
-    <div class="page-header">
-        <div class="container">
-            <h1 class="page-title"><?php echo $page_title; ?></h1>
-            <?php if (isset($page_description)): ?>
-                <p class="page-description"><?php echo $page_description; ?></p>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <!-- Breadcrumbs if needed -->
-    <?php if (isset($breadcrumbs)): ?>
-    <div class="breadcrumbs">
-        <div class="container">
-            <nav aria-label="breadcrumb">
-                <ol>
-                    <li><a href="<?php echo SITE_URL; ?>"><i class="fas fa-home"></i></a></li>
-                    <?php foreach ($breadcrumbs as $text => $url): ?>
-                        <?php if ($url): ?>
-                            <li><a href="<?php echo $url; ?>"><?php echo htmlspecialchars($text); ?></a></li>
-                        <?php else: ?>
-                            <li class="active"><?php echo htmlspecialchars($text); ?></li>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                </ol>
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-toggle" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
             </nav>
+
+            <!-- Categories Navigation -->
+            <div class="categories-nav">
+                <ul class="categories-list">
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i
+                                class="fas fa-laptop"></i> Electronics</a>
+                    </li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i>
+                            Fashion</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home
+                            & Garden</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i
+                                class="fas fa-basketball-ball"></i> Sports</a>
+                    </li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i>
+                            Beauty</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i>
+                            Books</a></li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <?php endif; ?>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu">
+            <div class="mobile-menu-header">
+                <div class="mobile-logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Modern Shop</span>
+                </div>
+                <button class="mobile-menu-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mobile-user-menu">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <div class="mobile-user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <div>
+                            <span
+                                class="mobile-user-name"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></span>
+                            <span
+                                class="mobile-user-email"><?php echo htmlspecialchars($_SESSION['user_email'] ?? ''); ?></span>
+                        </div>
+                    </div>
+                    <a href="<?php echo SITE_URL; ?>user/profile.php"><i class="fas fa-user"></i> My Profile</a>
+                    <a href="<?php echo SITE_URL; ?>user/orders.php"><i class="fas fa-box"></i> My Orders</a>
+                    <a href="<?php echo SITE_URL; ?>user/cart.php"><i class="fas fa-shopping-cart"></i> Cart
+                        <span class="mobile-cart-count" style="<?php echo ($cart_count > 0) ? '' : 'display:none;'; ?>">
+                            <?php echo $cart_count; ?>
+                        </span>
+                    </a>
+                    <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                        <a href="<?php echo SITE_URL; ?>admin/dashboard.php"><i class="fas fa-cog"></i> Admin Panel</a>
+                    <?php endif; ?>
+                    <a href="<?php echo SITE_URL; ?>user/logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <?php else: ?>
+                    <a href="<?php echo SITE_URL; ?>user/login.php"><i class="fas fa-sign-in-alt"></i> Login</a>
+                    <a href="<?php echo SITE_URL; ?>user/register.php"><i class="fas fa-user-plus"></i> Register</a>
+                <?php endif; ?>
+            </div>
+
+            <div class="mobile-categories">
+                <h3>Categories</h3>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i class="fas fa-laptop"></i>
+                    Electronics</a>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i>
+                    Fashion</a>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home &
+                    Garden</a>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i class="fas fa-basketball-ball"></i>
+                    Sports</a>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a>
+                <a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i> Books</a>
+            </div>
+        </div>
+    </header>
+
+    <main>

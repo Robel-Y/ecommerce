@@ -2,7 +2,13 @@
 // This file is included in header.php, so no separate navigation file needed
 // All navigation code is integrated into header.php for better performance
 ?>
+<!-- Add CSS files to your header.php -->
+<link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/components.css">
+<link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/responsive-breadcrumbs.css">
+<link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/breadcrumbs-animations.css">
 
+<!-- Add JavaScript to your footer.php -->
+<script src="<?php echo SITE_URL; ?>assets/js/breadcrumbs-script.js"></script>
 <!-- Breadcrumbs Component -->
 <div class="breadcrumbs">
     <div class="container">

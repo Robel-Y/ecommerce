@@ -1,6 +1,7 @@
 <!-- Footer Section -->
 </main> <!-- Close main content from header -->
 
+<script src="<?php echo SITE_URL; ?>assets/js/footer-script.js"></script>
 <footer class="main-footer">
     <div class="container">
         <!-- Footer Top -->
@@ -16,7 +17,8 @@
                     </div>
                 </div>
                 <p class="footer-description">
-                    Your one-stop destination for premium products. Quality, convenience, and customer satisfaction guaranteed.
+                    Your one-stop destination for premium products. Quality, convenience, and customer satisfaction
+                    guaranteed.
                 </p>
                 <div class="social-links">
                     <a href="#" class="social-link" aria-label="Facebook">
@@ -37,38 +39,46 @@
                 </div>
             </div>
 
-            <div class="footer-col">
+            <!-- <div class="footer-col">
                 <h3 class="footer-title">Quick Links</h3>
                 <ul class="footer-links">
-                    <li><a href="index.php"><i class="fas fa-chevron-right"></i> Home</a></li>
-                    <li><a href="products/all.php"><i class="fas fa-chevron-right"></i> Shop</a></li>
-                    <li><a href="about.php"><i class="fas fa-chevron-right"></i> About Us</a></li>
-                    <li><a href="contact.php"><i class="fas fa-chevron-right"></i> Contact</a></li>
-                    <li><a href="faq.php"><i class="fas fa-chevron-right"></i> FAQ</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>index.php"><i class="fas fa-chevron-right"></i> Home</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>products/all.php"><i class="fas fa-chevron-right"></i> Shop</a>
+                    </li>
+                    <li><a href="<?php echo SITE_URL; ?>about.php"><i class="fas fa-chevron-right"></i> About Us</a>
+                    </li>
+                    <li><a href="<?php echo SITE_URL; ?>contact.php"><i class="fas fa-chevron-right"></i> Contact</a>
+                    </li>
+                    <li><a href="<?php echo SITE_URL; ?>faq.php"><i class="fas fa-chevron-right"></i> FAQ</a></li>
                 </ul>
-            </div>
+            </div> -->
 
-            <div class="footer-col">
+            <!-- <div class="footer-col">
                 <h3 class="footer-title">Customer Service</h3>
                 <ul class="footer-links">
-                    <li><a href="shipping.php"><i class="fas fa-chevron-right"></i> Shipping Policy</a></li>
-                    <li><a href="returns.php"><i class="fas fa-chevron-right"></i> Return Policy</a></li>
-                    <li><a href="privacy.php"><i class="fas fa-chevron-right"></i> Privacy Policy</a></li>
-                    <li><a href="terms.php"><i class="fas fa-chevron-right"></i> Terms of Service</a></li>
-                    <li><a href="support.php"><i class="fas fa-chevron-right"></i> Support Center</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>shipping.php"><i class="fas fa-chevron-right"></i> Shipping
+                            Policy</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>returns.php"><i class="fas fa-chevron-right"></i> Return
+                            Policy</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>privacy.php"><i class="fas fa-chevron-right"></i> Privacy
+                            Policy</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>terms.php"><i class="fas fa-chevron-right"></i> Terms of
+                            Service</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>support.php"><i class="fas fa-chevron-right"></i> Support
+                            Center</a></li>
                 </ul>
-            </div>
+            </div> -->
 
             <div class="footer-col">
                 <h3 class="footer-title">Contact Info</h3>
                 <ul class="contact-info">
                     <li>
                         <i class="fas fa-map-marker-alt"></i>
-                        <span>123 Commerce Street, Business City, BC 12345</span>
+                        <span>Bahir Dar</span>
                     </li>
                     <li>
                         <i class="fas fa-phone-alt"></i>
-                        <span>+1 (555) 123-4567</span>
+                        <span>+251956565656</span>
                     </li>
                     <li>
                         <i class="fas fa-envelope"></i>
@@ -79,7 +89,7 @@
                         <span>Mon - Fri: 9:00 AM - 6:00 PM</span>
                     </li>
                 </ul>
-                
+
                 <div class="newsletter">
                     <h4>Newsletter</h4>
                     <p>Subscribe for latest updates</p>
@@ -104,12 +114,12 @@
                     <i class="fab fa-google-pay" title="Google Pay"></i>
                 </div>
             </div>
-            
+
             <div class="copyright">
                 <p>&copy; <?php echo date('Y'); ?> Modern Shop. All rights reserved.</p>
                 <p>Made with <i class="fas fa-heart"></i> for better shopping experience</p>
             </div>
-            
+
             <div class="footer-apps">
                 <a href="#" class="app-link">
                     <i class="fab fa-google-play"></i>
@@ -131,145 +141,146 @@
 
 <!-- JavaScript Files -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="assets/js/main.js"></script>
-<script src="assets/js/validation.js"></script>
-<script src="assets/js/cart.js"></script>
+<script src="<?php echo SITE_URL; ?>assets/js/main.js"></script>
+<script src="<?php echo SITE_URL; ?>assets/js/validation.js"></script>
+<script src="<?php echo SITE_URL; ?>assets/js/cart.js"></script>
 
 <!-- Custom Scripts -->
 <script>
-// Mobile Menu Toggle
-document.querySelector('.mobile-menu-toggle')?.addEventListener('click', function() {
-    document.querySelector('.mobile-menu').classList.add('active');
-    document.body.style.overflow = 'hidden';
-});
+    // Mobile Menu Toggle
+    document.querySelector('.mobile-menu-toggle')?.addEventListener('click', function () {
+        document.querySelector('.mobile-menu').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
 
-document.querySelector('.mobile-menu-close')?.addEventListener('click', function() {
-    document.querySelector('.mobile-menu').classList.remove('active');
-    document.body.style.overflow = '';
-});
-
-// Close mobile menu when clicking outside
-document.querySelector('.mobile-menu')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-        this.classList.remove('active');
+    document.querySelector('.mobile-menu-close')?.addEventListener('click', function () {
+        document.querySelector('.mobile-menu').classList.remove('active');
         document.body.style.overflow = '';
-    }
-});
-
-// Dropdown functionality
-document.querySelectorAll('.dropdown').forEach(dropdown => {
-    dropdown.addEventListener('mouseenter', function() {
-        this.querySelector('.dropdown-content').style.display = 'block';
     });
-    
-    dropdown.addEventListener('mouseleave', function() {
-        this.querySelector('.dropdown-content').style.display = '';
-    });
-});
 
-// Back to Top Button
-const backToTop = document.querySelector('.back-to-top');
-if (backToTop) {
-    window.addEventListener('scroll', function() {
-        if (window.pageYOffset > 300) {
-            backToTop.classList.add('visible');
-        } else {
-            backToTop.classList.remove('visible');
+    // Close mobile menu when clicking outside
+    document.querySelector('.mobile-menu')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
         }
     });
-    
-    backToTop.addEventListener('click', function() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
+
+    // Dropdown functionality
+    document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.addEventListener('mouseenter', function () {
+            this.querySelector('.dropdown-content').style.display = 'block';
+        });
+
+        dropdown.addEventListener('mouseleave', function () {
+            this.querySelector('.dropdown-content').style.display = '';
         });
     });
-}
 
-// Flash message close
-document.querySelectorAll('.flash-close').forEach(button => {
-    button.addEventListener('click', function() {
-        this.closest('.flash-message').style.display = 'none';
-    });
-});
+    // Back to Top Button
+    const backToTop = document.querySelector('.back-to-top');
+    if (backToTop) {
+        window.addEventListener('scroll', function () {
+            if (window.pageYOffset > 300) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
 
-// Auto-hide flash messages
-setTimeout(() => {
-    document.querySelectorAll('.flash-message').forEach(msg => {
-        msg.style.display = 'none';
-    });
-}, 5000);
-
-// Footer newsletter
-document.querySelector('.footer-newsletter')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const email = this.querySelector('input[type="email"]').value;
-    
-    if (validateEmail(email)) {
-        showNotification('Thank you for subscribing to our newsletter!', 'success');
-        this.reset();
-    } else {
-        showNotification('Please enter a valid email address', 'error');
+        backToTop.addEventListener('click', function () {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     }
-});
 
-// Email validation
-function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-}
+    // Flash message close
+    document.querySelectorAll('.flash-close').forEach(button => {
+        button.addEventListener('click', function () {
+            this.closest('.flash-message').style.display = 'none';
+        });
+    });
 
-// Show notification
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
+    // Auto-hide flash messages
+    setTimeout(() => {
+        document.querySelectorAll('.flash-message').forEach(msg => {
+            msg.style.display = 'none';
+        });
+    }, 5000);
+
+    // Footer newsletter
+    document.querySelector('.footer-newsletter')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = this.querySelector('input[type="email"]').value;
+
+        if (validateEmail(email)) {
+            showNotification('Thank you for subscribing to our newsletter!', 'success');
+            this.reset();
+        } else {
+            showNotification('Please enter a valid email address', 'error');
+        }
+    });
+
+    // Email validation
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    // Show notification
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
         <span>${message}</span>
         <button class="notification-close"><i class="fas fa-times"></i></button>
     `;
-    
-    document.body.appendChild(notification);
-    
-    // Show
-    setTimeout(() => notification.classList.add('show'), 10);
-    
-    // Auto remove
-    setTimeout(() => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    }, 5000);
-    
-    // Close button
-    notification.querySelector('.notification-close').addEventListener('click', () => {
-        notification.classList.remove('show');
-        setTimeout(() => notification.remove(), 300);
-    });
-}
 
-// Initialize tooltips
-document.querySelectorAll('[title]').forEach(element => {
-    element.addEventListener('mouseenter', function(e) {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = this.title;
-        document.body.appendChild(tooltip);
-        
-        const rect = this.getBoundingClientRect();
-        tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
-        tooltip.style.top = (rect.top - tooltip.offsetHeight - 10) + 'px';
-        
-        this._tooltip = tooltip;
+        document.body.appendChild(notification);
+
+        // Show
+        setTimeout(() => notification.classList.add('show'), 10);
+
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+
+        // Close button
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        });
+    }
+
+    // Initialize tooltips
+    document.querySelectorAll('[title]').forEach(element => {
+        element.addEventListener('mouseenter', function (e) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.textContent = this.title;
+            document.body.appendChild(tooltip);
+
+            const rect = this.getBoundingClientRect();
+            tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 10) + 'px';
+
+            this._tooltip = tooltip;
+        });
+
+        element.addEventListener('mouseleave', function () {
+            if (this._tooltip) {
+                this._tooltip.remove();
+                delete this._tooltip;
+            }
+        });
     });
-    
-    element.addEventListener('mouseleave', function() {
-        if (this._tooltip) {
-            this._tooltip.remove();
-            delete this._tooltip;
-        }
-    });
-});
 </script>
 
 </body>
+
 </html>
