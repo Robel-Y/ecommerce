@@ -1,0 +1,222 @@
+/* ============================================
+   FOOTER ANIMATIONS CSS - Footer Animations
+   ============================================ */
+
+/* Footer Entrance Animation */
+.main-footer {
+    animation: footerEntrance 0.8s ease;
+}
+
+@keyframes footerEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Social Link Animation */
+.social-link {
+    animation: socialPop 0.5s ease backwards;
+}
+
+.social-link:nth-child(1) { animation-delay: 0.1s; }
+.social-link:nth-child(2) { animation-delay: 0.2s; }
+.social-link:nth-child(3) { animation-delay: 0.3s; }
+.social-link:nth-child(4) { animation-delay: 0.4s; }
+.social-link:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes socialPop {
+    from {
+        opacity: 0;
+        transform: scale(0);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Footer Link Hover Animation */
+.footer-links a {
+    position: relative;
+    overflow: hidden;
+}
+
+.footer-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100%;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+    transition: left 0.5s ease;
+}
+
+.footer-links a:hover::after {
+    left: 100%;
+}
+
+/* Newsletter Input Focus Animation */
+.footer-newsletter input:focus {
+    animation: inputGlow 2s infinite;
+}
+
+@keyframes inputGlow {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(79, 70, 229, 0.2); }
+}
+
+/* Payment Icon Hover Animation */
+.payment-icons i {
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-icons i::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.3s ease;
+}
+
+.payment-icons i:hover::after {
+    transform: scale(1);
+}
+
+/* App Link Hover Animation */
+.app-link {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.app-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+    z-index: -1;
+}
+
+.app-link:hover::before {
+    left: 100%;
+}
+
+/* Back to Top Button Animation */
+.back-to-top {
+    animation: backToTopFloat 3s ease-in-out infinite;
+}
+
+@keyframes backToTopFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.back-to-top.visible {
+    animation: backToTopFloat 3s ease-in-out infinite;
+}
+
+/* Copyright Heart Beat */
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.copyright i {
+    animation: heartbeat 1.5s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* Footer Column Stagger Animation */
+.footer-col:nth-child(1) { animation-delay: 0.1s; }
+.footer-col:nth-child(2) { animation-delay: 0.2s; }
+.footer-col:nth-child(3) { animation-delay: 0.3s; }
+.footer-col:nth-child(4) { animation-delay: 0.4s; }
+
+/* Loading Animation for Newsletter Submit */
+.footer-newsletter button.loading {
+    position: relative;
+    color: transparent;
+}
+
+.footer-newsletter button.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Ripple Effect for Buttons */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Shake Animation for Errors */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Slide In Animation */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse Animation for Important Elements */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
