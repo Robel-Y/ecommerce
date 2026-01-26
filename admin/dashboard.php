@@ -6,6 +6,7 @@
 
 $page_title = 'Dashboard';
 
+
 // Include admin header and sidebar
 require_once __DIR__ . '/includes/admin_header.php';
 require_once __DIR__ . '/includes/admin_sidebar.php';
@@ -46,29 +47,34 @@ $low_stock_count = (int) (db_single()['total'] ?? 0);
 
 // Recent Orders (Last 10)
 $recent_orders = [];
-if (db_query("SELECT o.*, u.name as customer_name, u.email as customer_email \
-              FROM orders o \
-              LEFT JOIN users u ON o.user_id = u.id \
-              ORDER BY o.created_at DESC \
-              LIMIT 10")) {
+if (db_query("SELECT o.*, u.name as customer_name, u.email as customer_email
+                  FROM orders o
+                  LEFT JOIN users u ON o.user_id = u.id
+                  ORDER BY o.created_at DESC
+                  LIMIT 10")) {
     $recent_orders = db_result_set();
 }
 
 // Top Selling Products
 $top_products = [];
-$top_products_query_image = "SELECT p.id, p.name, p.image, p.price, COALESCE(SUM(oi.quantity), 0) as units_sold \
-                             FROM products p \
-                             INNER JOIN order_items oi ON p.id = oi.product_id \
-                             GROUP BY p.id \
-                             ORDER BY units_sold DESC \
-                             LIMIT 5";
 
-$top_products_query_image_url = "SELECT p.id, p.name, p.image_url, p.price, COALESCE(SUM(oi.quantity), 0) as units_sold \
-                                 FROM products p \
-                                 INNER JOIN order_items oi ON p.id = oi.product_id \
-                                 GROUP BY p.id \
-                                 ORDER BY units_sold DESC \
-                                 LIMIT 5";
+$top_products_query_image = "SELECT p.id, p.name, p.image, p.price,
+                                          COALESCE(SUM(CASE WHEN o.id IS NOT NULL THEN oi.quantity ELSE 0 END), 0) AS units_sold
+                                      FROM products p
+                                      LEFT JOIN order_items oi ON p.id = oi.product_id
+                                      LEFT JOIN orders o ON o.id = oi.order_id AND o.status = 'completed'
+                                      GROUP BY p.id
+                                      ORDER BY units_sold DESC
+                                      LIMIT 5";
+
+$top_products_query_image_url = "SELECT p.id, p.name, p.image_url, p.price,
+                                                COALESCE(SUM(CASE WHEN o.id IS NOT NULL THEN oi.quantity ELSE 0 END), 0) AS units_sold
+                                            FROM products p
+                                            LEFT JOIN order_items oi ON p.id = oi.product_id
+                                            LEFT JOIN orders o ON o.id = oi.order_id AND o.status = 'completed'
+                                            GROUP BY p.id
+                                            ORDER BY units_sold DESC
+                                            LIMIT 5";
 
 if (db_query($top_products_query_image)) {
     $top_products = db_result_set();
@@ -136,7 +142,7 @@ if (db_query($top_products_query_image)) {
                 <div class="stat-title">Total Users</div>
                 <div class="stat-value"><?php echo number_format($total_users); ?></div>
                 <div class="stat-change positive">
-                    <i class="fas fa-arrow-up"></i> 156 new this month
+                    <i class="fas fa-arrow-up"></i> 1 new this month
                 </div>
             </div>
             <div class="stat-icon">
@@ -208,7 +214,7 @@ if (db_query($top_products_query_image)) {
                         </td>
                         <td>
                             <div class="action-buttons">
-                                <a href="orders.php?view=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline" title="View Details">
+                                <a href="order_details.php?id=<?php echo $order['id']; ?>" class="btn btn-sm btn-outline" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>

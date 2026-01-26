@@ -26,15 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $order_id = isset($_POST['order_id']) ? (int) $_POST['order_id'] : 0;
 $status = isset($_POST['status']) ? sanitize_input($_POST['status'], 'string') : '';
 
-$allowed_statuses = ['pending', 'processing', 'completed', 'cancelled'];
-if ($order_id <= 0 || $status === '' || !in_array($status, $allowed_statuses, true)) {
+$supported_statuses = get_orders_supported_statuses();
+if ($order_id <= 0 || $status === '' || !in_array($status, $supported_statuses, true)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    echo json_encode(['success' => false, 'message' => 'Invalid request (unsupported status for this database)']);
     exit;
 }
 
-// Ensure order exists
-if (!db_query('SELECT id FROM orders WHERE id = :id')) {
+// Ensure order exists + get current status
+if (!db_query('SELECT id, status FROM orders WHERE id = :id')) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error']);
     exit;
@@ -45,6 +45,37 @@ $order = db_single();
 if (!$order) {
     http_response_code(404);
     echo json_encode(['success' => false, 'message' => 'Order not found']);
+    exit;
+}
+
+$current_status = (string) ($order['status'] ?? '');
+$supports_processing = in_array('processing', $supported_statuses, true);
+
+// Enforce step-based transitions
+$allowed_transitions = [];
+if ($supports_processing) {
+    $allowed_transitions = [
+        'pending' => ['processing', 'cancelled'],
+        'processing' => ['completed', 'cancelled'],
+        'completed' => [],
+        'cancelled' => [],
+    ];
+} else {
+    // Schema doesn't support processing: allow pending -> completed/cancelled.
+    $allowed_transitions = [
+        'pending' => ['completed', 'cancelled'],
+        'completed' => [],
+        'cancelled' => [],
+    ];
+}
+
+$next_allowed = $allowed_transitions[$current_status] ?? [];
+if (!in_array($status, $next_allowed, true)) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid status transition',
+    ]);
     exit;
 }
 

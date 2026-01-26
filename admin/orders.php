@@ -14,6 +14,8 @@ require_once __DIR__ . '/includes/admin_sidebar.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/utilities.php';
 
+$supports_processing = orders_supports_status('processing');
+
 // Pagination setup
 $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 $per_page = 20;
@@ -122,8 +124,9 @@ if (db_query($stats_query_total)) {
                 onchange="window.location.href='orders.php?status='+this.value">
                 <option value="">All Statuses</option>
                 <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                <option value="processing" <?php echo $status_filter === 'processing' ? 'selected' : ''; ?>>Processing
-                </option>
+                <?php if ($supports_processing): ?>
+                    <option value="processing" <?php echo $status_filter === 'processing' ? 'selected' : ''; ?>>Processing</option>
+                <?php endif; ?>
                 <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed
                 </option>
                 <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled
@@ -134,9 +137,9 @@ if (db_query($stats_query_total)) {
                 <i class="fas fa-print"></i> Print
             </button>
 
-            <button class="btn btn-outline btn-sm" onclick="exportOrders()">
+            <!-- <button class="btn btn-outline btn-sm" onclick="exportOrders()">
                 <i class="fas fa-download"></i> Export
-            </button>
+            </button> -->
         </div>
     </div>
 
@@ -213,12 +216,34 @@ if (db_query($stats_query_total)) {
                                         title="Print Invoice">
                                         <i class="fas fa-file-invoice"></i>
                                     </button>
-                               <?php if ($order['status'] === 'pending'): ?>
-                                        <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'processing')"
-                                            class="btn btn-sm btn-primary" title="Mark as Processing">
+
+                                    <?php if (($order['status'] ?? '') === 'pending'): ?>
+                                        <?php if ($supports_processing): ?>
+                                            <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'processing')"
+                                                class="btn btn-sm btn-primary" title="Move to Processing">
+                                                <i class="fas fa-hourglass-half"></i>
+                                            </button>
+                                        <?php else: ?>
+                                            <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'completed')"
+                                                class="btn btn-sm btn-primary" title="Mark as Completed">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'cancelled')"
+                                            class="btn btn-sm btn-outline" title="Cancel Order">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    <?php elseif (($order['status'] ?? '') === 'processing'): ?>
+                                        <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'completed')"
+                                            class="btn btn-sm btn-primary" title="Mark as Completed">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                  <?php endif; ?>
+                                        <button onclick="updateOrderStatus(<?php echo $order['id']; ?>, 'cancelled')"
+                                            class="btn btn-sm btn-outline" title="Cancel Order">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

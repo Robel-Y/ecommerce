@@ -7,6 +7,7 @@ require_once __DIR__ . '/../functions/security.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
+require_once __DIR__ . '/../functions/request.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     start_secure_session();
@@ -81,22 +82,58 @@ if ($has_category && db_query("SELECT DISTINCT category FROM products WHERE cate
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = sanitize_input($_POST['name'] ?? '', 'string');
-    $description = sanitize_input($_POST['description'] ?? '', 'string');
-    $price = (float) sanitize_input($_POST['price'] ?? 0, 'float');
-    $category = sanitize_input($_POST['category'] ?? '', 'string');
-    $image_value = sanitize_input($_POST['image'] ?? '', 'string');
-    $stock = (int) sanitize_input($_POST['stock'] ?? 0, 'int');
+    $name = request_post_string('name', 'string', '');
+    $description = request_post_string('description', 'string', '');
+    $price_raw = (string) ($_POST['price'] ?? '');
+    $category = request_post_string('category', 'string', '');
+    $image_value = request_post_string('image', 'string', '');
+    $stock_raw = (string) ($_POST['stock'] ?? '0');
 
-    if ($name === '') {
-        $errors[] = 'Product name is required.';
+    $rules = [
+        'name' => ['required', 'min_length:2', 'max_length:150'],
+        'price' => ['required', 'numeric', 'min:0'],
+        'category' => ['max_length:80'],
+        'image' => ['max_length:255'],
+        'description' => ['max_length:2000'],
+    ];
+    if ($has_stock) {
+        $rules['stock'] = ['required', 'int', 'min:0'];
     }
-    if ($price < 0) {
-        $errors[] = 'Price must be a valid number.';
+
+    $validation = request_validate(
+        [
+            'name' => $name,
+            'price' => $price_raw,
+            'category' => $category,
+            'image' => $image_value,
+            'description' => $description,
+            'stock' => $stock_raw,
+        ],
+        $rules,
+        [
+            'name' => 'string',
+            'price' => 'float',
+            'category' => 'string',
+            'image' => 'string',
+            'description' => 'string',
+            'stock' => 'int',
+        ]
+    );
+
+    if (!$validation['valid']) {
+        foreach ($validation['errors'] as $fieldErrors) {
+            foreach ($fieldErrors as $msg) {
+                $errors[] = $msg;
+            }
+        }
     }
-    if ($has_stock && $stock < 0) {
-        $errors[] = 'Stock must be 0 or greater.';
+
+    if ($has_category && $category !== '' && !in_array($category, $category_options, true)) {
+        $errors[] = 'Please select a valid category.';
     }
+
+    $price = (float) sanitize_input($price_raw, 'float');
+    $stock = (int) sanitize_input($stock_raw, 'int');
 
     if (empty($errors)) {
         $sets = ['name = ?', 'price = ?'];
