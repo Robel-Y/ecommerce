@@ -269,7 +269,7 @@ $page_title = 'Login';
                 <span>OR</span>
             </div>
 
-            <form method="POST" action="">
+            <form method="POST" action="" data-validate>
 
 
                 <div class="form-group">
@@ -277,7 +277,7 @@ $page_title = 'Login';
                         <i class="fas fa-envelope"></i> Email Address
                     </label>
                     <input type="email" id="email" name="email" class="form-control" placeholder="your@email.com"
-                        required autofocus
+                        required autofocus data-validate-rule="email"
                         value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
                 </div>
 
@@ -286,7 +286,7 @@ $page_title = 'Login';
                         <i class="fas fa-lock"></i> Password
                     </label>
                     <input type="password" id="password" name="password" class="form-control"
-                        placeholder="Enter your password" required>
+                        placeholder="Enter your password" required data-validate-rule="min-length" data-min-length="6">
                 </div>
 
                 <div class="form-check" style="display: flex; justify-content: space-between; align-items: center;">

@@ -24,7 +24,7 @@ $page_title = "Products | " . SITE_NAME;
 // ---------------------------
 // Get filter parameters
 // ---------------------------
-$category = isset($_GET['category']) ? $_GET['category'] : '';
+$category = isset($_GET['category']) ? trim((string) $_GET['category']) : '';
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
 $min_price = isset($_GET['min_price']) ? (float) $_GET['min_price'] : 0;
 $max_price = isset($_GET['max_price']) ? (float) $_GET['max_price'] : 10000;
@@ -43,12 +43,25 @@ $where_clauses = ["1=1"];
 // Initialize procedural connection
 $conn = db_connect();
 
+// Fetch DB-driven categories for sidebar + canonical matching
+$category_options = function_exists('get_distinct_categories') ? get_distinct_categories() : [];
+if ($category !== '' && !empty($category_options)) {
+    $cat_lc = mb_strtolower($category);
+    foreach ($category_options as $opt) {
+        if (mb_strtolower($opt) === $cat_lc) {
+            $category = $opt;
+            break;
+        }
+    }
+}
+
 $sql_conditions = [];
 $params = [];
 
 if (!empty($category)) {
-    $where_clauses[] = "category = :category";
-    $params[':category'] = $category;
+    // Case-insensitive match to keep links working regardless of stored casing
+    $where_clauses[] = "LOWER(category) = :category_lc";
+    $params[':category_lc'] = mb_strtolower($category);
 }
 
 if (!empty($search_query)) {
@@ -159,7 +172,7 @@ if ($is_ajax) {
 
     // Build header title (same logic as page)
     if (!empty($category)) {
-        $header_title = ucfirst((string) $category);
+        $header_title = (string) $category;
     } elseif (!empty($search_query)) {
         $header_title = 'Search: "' . $search_query . '"';
     } else {
@@ -263,7 +276,7 @@ include_once __DIR__ . '/../includes/header.php';
             <h1>
                 <?php
                 if (!empty($category)) {
-                    echo ucfirst(htmlspecialchars($category));
+                    echo htmlspecialchars($category);
                 } elseif (!empty($search_query)) {
                     echo 'Search: "' . htmlspecialchars($search_query) . '"';
                 } else {
@@ -284,35 +297,21 @@ include_once __DIR__ . '/../includes/header.php';
                     <div class="card-body">
                         <ul class="filter-list">
                             <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => ''])); ?>"
-                                class="<?php echo empty($category) ? 'active' : ''; ?>">
-                                All Categories
-                            </a>
+                                <a href="<?php echo SITE_URL; ?>products/all.php"
+                                    class="<?php echo empty($category) ? 'active' : ''; ?>">
+                                    All Categories
+                                </a>
                             </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'electronics'])); ?>"
-                                class="<?php echo $category === 'electronics' ? 'active' : ''; ?>">Electronics</a>
-                            </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'fashion'])); ?>"
-                                class="<?php echo $category === 'fashion' ? 'active' : ''; ?>">Fashion</a>
-                            </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'home'])); ?>"
-                                class="<?php echo $category === 'home' ? 'active' : ''; ?>">Home & Garden</a>
-                            </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'sports'])); ?>"
-                                class="<?php echo $category === 'sports' ? 'active' : ''; ?>">Sports</a>
-                            </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'beauty'])); ?>"
-                                class="<?php echo $category === 'beauty' ? 'active' : ''; ?>">Beauty</a>
-                            </li>
-                            <li>
-                            <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => 'books'])); ?>"
-                                class="<?php echo $category === 'books' ? 'active' : ''; ?>">Books</a>
-                            </li>
+
+                            <?php foreach ($category_options as $cat): ?>
+                                <?php $is_active = (!empty($category) && mb_strtolower($category) === mb_strtolower($cat)); ?>
+                                <li>
+                                    <a href="<?php echo build_products_all_url(array_merge($current_params, ['category' => $cat])); ?>"
+                                        class="<?php echo $is_active ? 'active' : ''; ?>">
+                                        <?php echo htmlspecialchars($cat); ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
                         </ul>
                     </div>
                 </div>

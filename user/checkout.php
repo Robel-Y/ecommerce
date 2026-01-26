@@ -16,6 +16,7 @@ require_once __DIR__ . '/../includes/auth_check.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/utilities.php';
 require_once __DIR__ . '/../functions/validation.php';
+require_once __DIR__ . '/../functions/cart.php';
 
 // Require login for checkout
 require_login();
@@ -259,6 +260,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 'count' => 0
             ];
             $_SESSION['cart_count'] = 0;
+
+            // Clear persistent DB cart too (prevents cart reappearing after logout/login)
+            if (!empty($user_id)) {
+                cart_db_clear((int) $user_id);
+            }
 
             $order_success = true;
             $payment_summary = [

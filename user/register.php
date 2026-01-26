@@ -254,7 +254,7 @@ $page_title = 'Create Account';
 
                 <div class="form-group">
                     <label for="name" class="form-label">
-                        <i class="fas fa-user"></i> Full Name *
+                        <i class="fas fa-user"></i> Username *
                     </label>
                     <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required
                         autofocus value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>">

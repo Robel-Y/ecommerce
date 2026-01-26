@@ -14,6 +14,32 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/utilities.php';
 
+// Compatibility: this project uses `products.category` (string) and has no `categories` table.
+// Redirect any category page access to the unified listing page.
+$category_param = trim((string) ($_GET['category'] ?? ''));
+if ($category_param !== '') {
+    $qs = $_GET;
+    unset($qs['id']);
+    $qs['category'] = $category_param;
+    $url = SITE_URL . 'products/all.php';
+    $query = http_build_query(array_filter($qs, static function ($v) {
+        return $v !== '' && $v !== null;
+    }));
+    if ($query) {
+        $url .= '?' . $query;
+    }
+    redirect($url);
+}
+
+// Legacy URL `category.php?id=...` cannot be mapped without a categories table.
+// Send users to All Products instead.
+if (isset($_GET['id'])) {
+    redirect(SITE_URL . 'products/all.php');
+}
+
+// No category provided; send to All Products.
+redirect(SITE_URL . 'products/all.php');
+
 // Get category ID from URL
 $category_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 

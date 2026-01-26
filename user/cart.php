@@ -14,6 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 // Include required files
 require_once __DIR__ . '/../functions/utilities.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../functions/cart.php';
 
 // Initialize cart if not exists
 if (!isset($_SESSION['cart'])) {
@@ -22,6 +23,18 @@ if (!isset($_SESSION['cart'])) {
         'total' => 0,
         'count' => 0
     ];
+}
+
+// If logged in, prefer DB-backed cart (persistent across logout/login)
+$user_id = (int) ($_SESSION['user_id'] ?? 0);
+if ($user_id > 0) {
+    cart_session_ensure();
+    $has_items = !empty($_SESSION['cart']['items']);
+    $already_loaded = !empty($_SESSION['cart_loaded_from_db']);
+    // Only hydrate from DB when session cart is empty to avoid wiping newly-added items
+    if (!$has_items && !$already_loaded) {
+        cart_load_db_to_session($user_id);
+    }
 }
 
 $cart_items = $_SESSION['cart']['items'] ?? [];

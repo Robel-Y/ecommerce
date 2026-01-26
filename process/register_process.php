@@ -14,6 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
 require_once __DIR__ . '/../functions/security.php';
+require_once __DIR__ . '/../functions/request.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
 // Check if form was submitted
@@ -24,17 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 
 // Get form data
-$name = sanitize_input($_POST['name'] ?? '', 'string');
-$email = sanitize_input($_POST['email'] ?? '', 'email');
-$password = $_POST['password'] ?? '';
-$confirm_password = $_POST['confirm_password'] ?? '';
-$phone = sanitize_input($_POST['phone'] ?? '', 'string');
-$address = sanitize_input($_POST['address'] ?? '', 'string');
-$city = sanitize_input($_POST['city'] ?? '', 'string');
-$state = sanitize_input($_POST['state'] ?? '', 'string');
-$zip = sanitize_input($_POST['zip'] ?? '', 'string');
-$country = sanitize_input($_POST['country'] ?? '', 'string');
-$agree_terms = isset($_POST['agree_terms']);
+$name = request_post_string('name', 'string', '');
+$email = request_post_string('email', 'email', '');
+$password = (string) ($_POST['password'] ?? '');
+$confirm_password = (string) ($_POST['confirm_password'] ?? '');
+$phone = request_post_string('phone', 'string', '');
+$address = request_post_string('address', 'string', '');
+$city = request_post_string('city', 'string', '');
+$state = request_post_string('state', 'string', '');
+$zip = request_post_string('zip', 'string', '');
+$country = request_post_string('country', 'string', '');
+$agree_terms = request_post_bool('agree_terms');
 
 // Store form data in session for repopulating on error
 $_SESSION['form_data'] = [
@@ -52,7 +53,7 @@ $_SESSION['form_data'] = [
 $validation_rules = [
     'name' => ['required', 'min_length:2', 'max_length:100'],
     'email' => ['required', 'email'],
-    'password' => ['required', 'min_length:8'],
+    'password' => ['required', 'min_length:8', 'max_length:255'],
     'confirm_password' => ['required', 'match:password'],
     'phone' => ['required', 'regex:/^[0-9\s\-\(\)]{10,15}$/'],
     'address' => ['required', 'min_length:5', 'max_length:200'],
@@ -62,8 +63,32 @@ $validation_rules = [
     'country' => ['required', 'min_length:2', 'max_length:50']
 ];
 
-// Validate form data
-$validation_result = validate_form_data($_POST, $validation_rules);
+// Validate form data (sanitized)
+$validation_result = request_validate(
+    [
+        'name' => $name,
+        'email' => $email,
+        'password' => $password,
+        'confirm_password' => $confirm_password,
+        'phone' => $phone,
+        'address' => $address,
+        'city' => $city,
+        'state' => $state,
+        'zip' => $zip,
+        'country' => $country,
+    ],
+    $validation_rules,
+    [
+        'name' => 'string',
+        'email' => 'email',
+        'phone' => 'string',
+        'address' => 'string',
+        'city' => 'string',
+        'state' => 'string',
+        'zip' => 'string',
+        'country' => 'string',
+    ]
+);
 
 if (!$validation_result['valid']) {
     $_SESSION['validation_errors'] = $validation_result['errors'];

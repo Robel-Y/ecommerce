@@ -157,7 +157,7 @@ include_once __DIR__ . '/../includes/header.php';
                         <input type="hidden" name="action" value="update_profile">
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="name">Full Name *</label>
+                                <label for="name">Username *</label>
                                 <input type="text" id="name" name="name" class="form-control"
                                     value="<?php echo htmlspecialchars($user['name']); ?>" required>
                             </div>
