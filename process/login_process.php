@@ -14,6 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
 require_once __DIR__ . '/../functions/security.php';
+require_once __DIR__ . '/../functions/request.php';
 require_once __DIR__ . '/../includes/auth_check.php';
 
 // Check if form was submitted
@@ -24,20 +25,25 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 
 // Get form data
-$email = sanitize_input($_POST['email'] ?? '', 'email');
-$password = $_POST['password'] ?? '';
-$remember_me = isset($_POST['remember_me']);
+$email = request_post_string('email', 'email', '');
+$password = (string) ($_POST['password'] ?? '');
+$remember_me = request_post_bool('remember_me');
 
 // Store email for repopulating
 $_SESSION['login_email'] = $email;
 
 // Validate inputs
-if (empty($email) || empty($password)) {
-    redirect_with_message('user/login.php', 'error', 'Please fill in all fields');
-}
+$validation = request_validate(
+    ['email' => $email, 'password' => $password],
+    [
+        'email' => ['required', 'email', 'max_length:254'],
+        'password' => ['required', 'min_length:6', 'max_length:255'],
+    ],
+    ['email' => 'email']
+);
 
-if (!validate_email($email)) {
-    redirect_with_message('user/login.php', 'error', 'Invalid email format');
+if (!$validation['valid']) {
+    redirect_with_message('user/login.php', 'error', 'Please check your email and password.');
 }
 
 // Verify login credentials

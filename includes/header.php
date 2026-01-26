@@ -4,12 +4,47 @@ if (session_status() === PHP_SESSION_NONE) {
     require_once __DIR__ . '/../config/constants.php';
 }
 
+// Load helpers for DB-driven categories
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../functions/utilities.php';
+
 // Get cart count from session (support both legacy and current cart session shapes)
 $cart_count = 0;
 if (isset($_SESSION['cart']['count'])) {
     $cart_count = (int) $_SESSION['cart']['count'];
 } elseif (isset($_SESSION['cart_count'])) {
     $cart_count = (int) $_SESSION['cart_count'];
+}
+
+$nav_categories = [];
+try {
+    if (function_exists('get_distinct_categories')) {
+        $nav_categories = get_distinct_categories(6);
+    }
+} catch (Throwable $e) {
+    $nav_categories = [];
+}
+
+$category_icon_map = [
+    'elect' => 'fa-laptop',
+    'fashion' => 'fa-tshirt',
+    'cloth' => 'fa-tshirt',
+    'home' => 'fa-home',
+    'garden' => 'fa-home',
+    'sport' => 'fa-basketball-ball',
+    'beaut' => 'fa-spa',
+    'book' => 'fa-book',
+];
+
+function header_category_icon(string $category, array $map): string
+{
+    $key = mb_strtolower($category);
+    foreach ($map as $needle => $icon) {
+        if (strpos($key, $needle) !== false) {
+            return $icon;
+        }
+    }
+    return 'fa-tag';
 }
 ?>
 <!DOCTYPE html>
@@ -19,7 +54,7 @@ if (isset($_SESSION['cart']['count'])) {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title ?? 'Modern Shop'; ?></title>
+    <title><?php echo $page_title ?? 'Merkato Go'; ?></title>
 
     <script>
         (function() {
@@ -37,7 +72,7 @@ if (isset($_SESSION['cart']['count'])) {
     <!-- Icons & Fonts (used across UI) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="shortcut icon" href="assets/images/icons/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="<?php echo SITE_URL; ?>assets/images/icons/favicon.ico" type="image/x-icon">
     
     <!-- Global Variables & Base Styles -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>assets/css/variables.css">
@@ -107,11 +142,11 @@ if (isset($_SESSION['cart']['count'])) {
                 <div class="logo">
                     <a href="<?php echo SITE_URL; ?>index.php">
                         <div class="logo-icon">
-                            <i class="fas fa-shopping-bag"></i>
+                            <img src="<?php echo SITE_URL; ?>assets/images/icons/favicon.ico" alt="Merkato Go">
                         </div>
                         <div class="logo-text">
-                            <span class="logo-main">Modern</span>
-                            <span class="logo-sub">Shop</span>
+                            <span class="logo-main">Merkato</span>
+                            <span class="logo-sub">Go</span>
                         </div>
                     </a>
                 </div>
@@ -129,7 +164,7 @@ if (isset($_SESSION['cart']['count'])) {
 
                 <!-- User Actions -->
                 <div class="user-actions">
-                    <button type="button" class="theme-toggle" aria-label="Theme: System" title="Theme: System">
+                    <button type="button" class="theme-toggle" >
                         <i class="fas fa-circle-half-stroke"></i>
                     </button>
 
@@ -179,20 +214,24 @@ if (isset($_SESSION['cart']['count'])) {
             <!-- Categories Navigation -->
             <div class="categories-nav">
                 <ul class="categories-list">
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i
-                                class="fas fa-laptop"></i> Electronics</a>
-                    </li>
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i>
-                            Fashion</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home
-                            & Garden</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i
-                                class="fas fa-basketball-ball"></i> Sports</a>
-                    </li>
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i>
-                            Beauty</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i>
-                            Books</a></li>
+                    <?php if (!empty($nav_categories)): ?>
+                        <?php foreach ($nav_categories as $cat): ?>
+                            <?php $icon = header_category_icon($cat, $category_icon_map); ?>
+                            <li>
+                                <a href="<?php echo SITE_URL; ?>products/all.php?category=<?php echo rawurlencode($cat); ?>">
+                                    <i class="fas <?php echo htmlspecialchars($icon); ?>"></i>
+                                    <?php echo htmlspecialchars($cat); ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i class="fas fa-laptop"></i> Electronics</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i> Fashion</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home & Garden</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i class="fas fa-basketball-ball"></i> Sports</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a></li>
+                        <li><a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i> Books</a></li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
@@ -201,8 +240,8 @@ if (isset($_SESSION['cart']['count'])) {
         <div class="mobile-menu">
             <div class="mobile-menu-header">
                 <div class="mobile-logo">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span>Modern Shop</span>
+                    <img src="assets/images/icons/favicon.ico" alt="Merkato" srcset="">
+                    <span>Merkato Go</span>
                 </div>
                 <button class="mobile-menu-close">
                     <i class="fas fa-times"></i>
@@ -239,16 +278,22 @@ if (isset($_SESSION['cart']['count'])) {
 
             <div class="mobile-categories">
                 <h3>Categories</h3>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i class="fas fa-laptop"></i>
-                    Electronics</a>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i>
-                    Fashion</a>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home &
-                    Garden</a>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i class="fas fa-basketball-ball"></i>
-                    Sports</a>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a>
-                <a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i> Books</a>
+                <?php if (!empty($nav_categories)): ?>
+                    <?php foreach ($nav_categories as $cat): ?>
+                        <?php $icon = header_category_icon($cat, $category_icon_map); ?>
+                        <a href="<?php echo SITE_URL; ?>products/all.php?category=<?php echo rawurlencode($cat); ?>">
+                            <i class="fas <?php echo htmlspecialchars($icon); ?>"></i>
+                            <?php echo htmlspecialchars($cat); ?>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=electronics"><i class="fas fa-laptop"></i> Electronics</a>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=fashion"><i class="fas fa-tshirt"></i> Fashion</a>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=home"><i class="fas fa-home"></i> Home & Garden</a>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=sports"><i class="fas fa-basketball-ball"></i> Sports</a>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=beauty"><i class="fas fa-spa"></i> Beauty</a>
+                    <a href="<?php echo SITE_URL; ?>products/all.php?category=books"><i class="fas fa-book"></i> Books</a>
+                <?php endif; ?>
             </div>
         </div>
     </header>

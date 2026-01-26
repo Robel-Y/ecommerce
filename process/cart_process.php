@@ -14,6 +14,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../functions/validation.php';
 require_once __DIR__ . '/../functions/utilities.php';
+require_once __DIR__ . '/../functions/cart.php';
 
 // Set JSON header for AJAX responses
 header('Content-Type: application/json');
@@ -40,6 +41,17 @@ if (!isset($_SESSION['cart'])) {
         'total' => 0,
         'count' => 0
     ];
+}
+
+// If logged in, hydrate session cart from DB once per session
+$user_id = (int) ($_SESSION['user_id'] ?? 0);
+if ($user_id > 0) {
+    cart_session_ensure();
+    $has_items = !empty($_SESSION['cart']['items']);
+    $already_loaded = !empty($_SESSION['cart_loaded_from_db']);
+    if (!$has_items && !$already_loaded) {
+        cart_load_db_to_session($user_id);
+    }
 }
 
 // Handle different actions
@@ -71,6 +83,11 @@ switch ($action) {
 
 // Update cart totals
 update_cart_totals();
+
+// Persist cart for logged-in users (DB cart survives logout/login)
+if ($user_id > 0 && in_array($action, ['add', 'update', 'remove', 'clear'], true)) {
+    cart_db_replace_from_session($user_id);
+}
 
 // Return JSON response for AJAX, otherwise redirect
 if ($is_ajax) {

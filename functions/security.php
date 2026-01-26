@@ -13,10 +13,25 @@ function start_secure_session()
 {
     // Only set cookie params if session hasn't started
     if (session_status() === PHP_SESSION_NONE) {
+        // Align with legacy session name used across the app
+        if (session_name() !== 'SECURE_SESSION') {
+            session_name('SECURE_SESSION');
+        }
+
+        @ini_set('session.cookie_httponly', '1');
+        @ini_set('session.use_strict_mode', '1');
+        @ini_set('session.cookie_samesite', 'Strict');
+
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+        // Strip port (e.g. localhost:8080)
+        $host = preg_replace('/:\\d+$/', '', $host);
+        // Browsers handle localhost/IP best when cookie domain is omitted
+        $cookie_domain = (strpos($host, '.') !== false) ? $host : '';
+
         session_set_cookie_params([
             'lifetime' => 0,
             'path' => '/',
-            'domain' => $_SERVER['HTTP_HOST'],
+            'domain' => $cookie_domain,
             'secure' => isset($_SERVER['HTTPS']),
             'httponly' => true,
             'samesite' => 'Strict'

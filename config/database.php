@@ -69,10 +69,13 @@ function db_query($sql)
 {
     global $db_connection, $db_stmt;
     $conn = db_connect();
+    // Always reset the last statement so a failed prepare can't leave a stale PDOStatement.
+    $db_stmt = null;
     try {
         $db_stmt = $conn->prepare($sql);
         return true;
     } catch (PDOException $e) {
+        $db_stmt = null;
         db_log_error($e->getMessage());
         return false;
     }
